@@ -46,6 +46,8 @@ class VOTVideo(Video):
 
         # empty tag
         all_tag = [v for k, v in self.tags.items() if len(v) > 0 ]
+        print(all_tag)
+        print(np.array(all_tag, dtype=np.int32))
         self.tags['empty'] = np.all(1 - np.array(all_tag), axis=1).astype(np.int32).tolist()
         # self.tags['empty'] = np.all(1 - np.array(list(self.tags.values())),
         #         axis=1).astype(np.int32).tolist()
@@ -199,4 +201,3 @@ class VOTLTDataset(Dataset):
                                           meta_data[video]['init_rect'],
                                           meta_data[video]['img_names'],
                                           meta_data[video]['gt_rect'])
-

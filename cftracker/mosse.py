@@ -40,13 +40,19 @@ class MOSSE(BaseCF):
             self._Bi+=Fi*np.conj(Fi)
 
 
-    def update(self,current_frame,vis=False):
+    def update(self,current_frame,vis=False,FI=None):
         if len(current_frame.shape)!=2:
             assert current_frame.shape[2]==3
             current_frame=cv2.cvtColor(current_frame,cv2.COLOR_BGR2GRAY)
         current_frame=current_frame.astype(np.float32)/255
         Hi=self._Ai/self._Bi
-        fi=cv2.getRectSubPix(current_frame,(int(round(self.w)),int(round(self.h))),self._center)
+
+        if FI is None:
+            fi=cv2.getRectSubPix(current_frame,(int(round(self.w)),int(round(self.h))),self._center)
+        else:
+            fi=cv2.getRectSubPix(current_frame,(int(round(self.w)),int(round(self.h))),(int(round(FI[0]+FI[2]/2)),int(round(FI[1]+FI[3]/2))))
+
+        cv2.imshow("test", fi)
         fi=self._preprocessing(fi,self.cos_window)
         Gi=Hi*np.fft.fft2(fi)
         gi=np.real(np.fft.ifft2(Gi))
@@ -82,15 +88,3 @@ class MOSSE(BaseCF):
         W[:, 2:] = center_warp - center_warp * tmp
         warped = cv2.warpAffine(img, W, (w, h), cv2.BORDER_REFLECT)
         return warped
-
-
-
-
-
-
-
-
-
-
-
-

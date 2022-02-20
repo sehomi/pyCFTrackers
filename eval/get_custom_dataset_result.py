@@ -35,7 +35,7 @@ parser = argparse.ArgumentParser(description='Test')
 
 parser.add_argument('--dataset', dest='dataset', default='VOT2016',
                     help='datasets')
-parser.add_argument('-l', '--log', default="log_test_vot2016.txt", type=str, help='log file')
+parser.add_argument('-l', '--log', default="log_test_VOT2016.txt", type=str, help='log file')
 parser.add_argument('-v', '--visualization', dest='visualization', action='store_true',
                     help='whether visualize result',default=True)
 parser.add_argument('--gt', action='store_true', help='whether use gt rect for davis (Oracle)')
@@ -105,6 +105,7 @@ def track_vot(tracker_type, video):
     for f, image_file in enumerate(image_files):
         im = cv2.imread(image_file)
         tic = cv2.getTickCount()
+        my_rect = (200,200,100,100)
         if f == start_frame:  # init
             tracker=create_tracker(tracker_type)
             if tracker_type=='LDES':
@@ -125,7 +126,8 @@ def track_vot(tracker_type, video):
                 tracker.init(im,((cx-w/2),(cy-h/2),(w),(h)))
             regions.append(1 if 'VOT' in args.dataset else gt[f])
         elif f > start_frame:
-            location=tracker.update(im)
+            # location=tracker.update(im)
+            location=tracker.update(im, FI=my_rect)
 
             if 'VOT' in args.dataset:
                 b_overlap = region.vot_overlap(gt[f],location, (im.shape[1], im.shape[0]))
@@ -159,8 +161,10 @@ def track_vot(tracker_type, video):
             cv2.putText(im_show, str(f), (40, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
             cv2.putText(im_show, str(lost_times), (40, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
+            cv2.rectangle(im_show, my_rect, (0, 0, 255), 3)
+
             cv2.imshow(video['name'], im_show)
-            cv2.waitKey(1)
+            cv2.waitKey(100)
     toc /= cv2.getTickFrequency()
 
     # save result

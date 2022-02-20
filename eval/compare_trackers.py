@@ -35,7 +35,7 @@ parser = argparse.ArgumentParser(description='Test')
 
 parser.add_argument('--dataset', dest='dataset', default='VOT2016',
                     help='datasets')
-parser.add_argument('-l', '--log', default="log_test_vot2016.txt", type=str, help='log file')
+parser.add_argument('-l', '--log', default="log_test_VOT2016.txt", type=str, help='log file')
 parser.add_argument('-v', '--visualization', dest='visualization', action='store_true',
                     help='whether visualize result',default=True)
 parser.add_argument('--gt', action='store_true', help='whether use gt rect for davis (Oracle)')
@@ -95,53 +95,33 @@ def create_tracker(tracker_type):
         raise NotImplementedError
     return tracker
 
-def track_vot(tracker_type, video):
+def track_vot(tracker_types, colors, video):
 
     regions = []  # result and states[1 init / 2 lost / 0 skip]
     image_files, gt = video['image_files'], video['gt']
 
     start_frame, end_frame, lost_times, toc = 0, len(image_files), 0, 0
 
+    trackers = []
     for f, image_file in enumerate(image_files):
         im = cv2.imread(image_file)
         tic = cv2.getTickCount()
         if f == start_frame:  # init
-            tracker=create_tracker(tracker_type)
-            if tracker_type=='LDES':
-                tracker.init(im,gt[f])
-                if tracker.polygon is True:
-                    location=gt[f]
-                else:
-                    cx, cy, w, h = get_axis_aligned_bbox(gt[f])
-                    target_pos = np.array([cx, cy])
-                    target_sz = np.array([w, h])
-                    location = cxy_wh_2_rect(target_pos, target_sz)
+            for tracker_type in tracker_types:
+                trackers.append(create_tracker(tracker_type))
 
-            else:
                 cx, cy, w, h = get_axis_aligned_bbox(gt[f])
-                target_pos = np.array([cx, cy])
-                target_sz = np.array([w, h])
-                location=cxy_wh_2_rect(target_pos,target_sz)
-                tracker.init(im,((cx-w/2),(cy-h/2),(w),(h)))
-            regions.append(1 if 'VOT' in args.dataset else gt[f])
-        elif f > start_frame:
-            location=tracker.update(im)
+                trackers[-1].init(im,((cx-w/2),(cy-h/2),(w),(h)))
 
-            if 'VOT' in args.dataset:
-                b_overlap = region.vot_overlap(gt[f],location, (im.shape[1], im.shape[0]))
-            else:
-                b_overlap = 1
-            if b_overlap:
-                regions.append(location)
-            else:  # lost
-                regions.append(2)
-                lost_times += 1
-                start_frame = f + 5  # skip 5 frames
-        else:  # skip
-            regions.append(0)
+        elif f > start_frame:
+            locations = []
+            for tracker in trackers:
+                locations.append(tracker.update(im))
+
+
         toc += cv2.getTickCount() - tic
 
-        if args.visualization and f >= start_frame:  # visualization (skip lost frame)
+        if args.visualization and f > start_frame:  # visualization (skip lost frame)
             im_show = im.copy()
             if f == 0: cv2.destroyAllWindows()
             if gt.shape[0] > f:
@@ -149,17 +129,20 @@ def track_vot(tracker_type, video):
                     cv2.polylines(im_show, [np.array(gt[f], np.int).reshape((-1, 1, 2))], True, (0, 255, 0), 3)
                 else:
                     cv2.rectangle(im_show, (gt[f, 0], gt[f, 1]), (gt[f, 0] + gt[f, 2], gt[f, 1] + gt[f, 3]), (0, 255, 0), 3)
-            if len(location) == 8:
-                location_int = np.int0(location)
-                cv2.polylines(im_show, [location_int.reshape((-1, 1, 2))], True, (0, 255, 255), 3)
-            else:
-                location = [int(l) for l in location]
-                cv2.rectangle(im_show, (location[0], location[1]),
-                              (location[0] + location[2], location[1] + location[3]), (0, 255, 255), 3)
+
+            for i,location in enumerate(locations):
+                if len(location) == 8:
+                    location_int = np.int0(location)
+                    cv2.polylines(im_show, [location_int.reshape((-1, 1, 2))], True, colors[i], 3)
+                else:
+                    location = [int(l) for l in location]
+                    cv2.rectangle(im_show, (location[0], location[1]),
+                                  (location[0] + location[2], location[1] + location[3]), colors[i], 3)
             cv2.putText(im_show, str(f), (40, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
             cv2.putText(im_show, str(lost_times), (40, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
             cv2.imshow(video['name'], im_show)
+            cv2.imwrite('/home/hojat/Desktop/runs/seqs/'+video['name']+'/'+str(f)+'.jpg', im_show)
             cv2.waitKey(1)
     toc /= cv2.getTickFrequency()
 
@@ -199,18 +182,18 @@ def main():
     total_lost = 0  # VOT
     speed_list = []
 
-    trackers = ['MOSSE']
+    trackers=['MOSSE','CSK','KCF','DSST','Staple','OPENCV-CSRDCF','STRCF']
+    colors = [(240, 79, 67), (204, 120, 41), (204, 193, 41), (139, 204, 41), (41, 204, 114), (90, 41, 204), (204, 41, 177)]
 
-    for tracker_type in trackers:
 
-        for v_id, video in enumerate(dataset.keys(), start=1):
-            lost, speed = track_vot(tracker_type,dataset[video])
-            total_lost += lost
-            speed_list.append(speed)
+    for v_id, video in enumerate(dataset.keys(), start=1):
+        lost, speed = track_vot(trackers,colors,dataset[video])
+        total_lost += lost
+        speed_list.append(speed)
 
-        logger.info('Total Lost: {:d}'.format(total_lost))
+    logger.info('Total Lost: {:d}'.format(total_lost))
 
-        logger.info('Mean Speed: {:.2f} FPS'.format(np.mean(speed_list)))
+    logger.info('Mean Speed: {:.2f} FPS'.format(np.mean(speed_list)))
 
 
 if __name__ == '__main__':

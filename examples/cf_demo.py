@@ -3,7 +3,7 @@ from examples.pytracker import PyTracker
 from lib.utils import get_ground_truthes,plot_precision,plot_success
 from examples.otbdataset_config import OTBDatasetConfig
 if __name__ == '__main__':
-    data_dir='../dataset/test'
+    data_dir='../dataset/VOT2016'
     data_names=sorted(os.listdir(data_dir))
 
     print(data_names)
