@@ -54,6 +54,33 @@ def load_dataset(dataset):
                 gt = np.column_stack((gt[:, 0], gt[:, 1], gt[:, 0], gt[:, 1] + gt[:, 3]-1,
                                       gt[:, 0] + gt[:, 2]-1, gt[:, 1] + gt[:, 3]-1, gt[:, 0] + gt[:, 2]-1, gt[:, 1]))
             info[video] = {'image_files': image_files, 'gt': gt, 'name': video}
+
+    if 'VIOT' in dataset:
+        base_path = join(realpath(dirname(__file__)), '../dataset', dataset)
+        if not exists(base_path):
+            logging.error("Please download test dataset and extract it into dataset folder!!!")
+            exit()
+        list_path = join(base_path, 'list.txt')
+        with open(list_path) as f:
+            videos = [v.strip() for v in f.readlines()]
+        for video in videos:
+            video_path = join(base_path, video)
+            image_path = join(video_path, '*.jpg')
+            image_files = sorted(glob.glob(image_path))
+            if len(image_files) == 0:  # VOT2018
+                image_path = join(video_path, 'color', '*.jpg')
+                image_files = sorted(glob.glob(image_path))
+            gt_path = join(video_path, 'groundtruth.txt')
+            gt = np.loadtxt(gt_path, delimiter=',').astype(np.float64)
+            if gt.shape[1] == 4:
+                gt = np.column_stack((gt[:, 0], gt[:, 1], gt[:, 0], gt[:, 1] + gt[:, 3]-1,
+                                      gt[:, 0] + gt[:, 2]-1, gt[:, 1] + gt[:, 3]-1, gt[:, 0] + gt[:, 2]-1, gt[:, 1]))
+
+            st_path = join(video_path, 'camera_states.txt')
+            st = np.loadtxt(st_path, delimiter=',').astype(np.float64)
+
+            info[video] = {'image_files': image_files, 'states': st, 'gt': gt, 'name': video}
+
     elif 'DAVIS' in dataset:
         base_path = join(realpath(dirname(__file__)), '../data', 'DAVIS')
         list_path = join(realpath(dirname(__file__)), '../data', 'DAVIS', 'ImageSets', dataset[-4:], 'val.txt')

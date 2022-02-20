@@ -52,7 +52,7 @@ class MOSSE(BaseCF):
         else:
             fi=cv2.getRectSubPix(current_frame,(int(round(self.w)),int(round(self.h))),(int(round(FI[0]+FI[2]/2)),int(round(FI[1]+FI[3]/2))))
 
-        cv2.imshow("test", fi)
+        # cv2.imshow("test", fi)
         fi=self._preprocessing(fi,self.cos_window)
         Gi=Hi*np.fft.fft2(fi)
         gi=np.real(np.fft.ifft2(Gi))

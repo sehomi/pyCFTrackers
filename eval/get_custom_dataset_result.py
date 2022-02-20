@@ -31,11 +31,14 @@ from cftracker.opencv_cftracker import OpenCVCFTracker
 
 from lib.eco.config import vot16_deep_config,vot16_hc_config
 from cftracker.config import ldes_config,dsst_config,csrdcf_config,staple_config,mkcf_up_config,mccth_staple_config
+
+from kinematics.camera_kinematics import CameraKinematics
+
 parser = argparse.ArgumentParser(description='Test')
 
-parser.add_argument('--dataset', dest='dataset', default='VOT2016',
+parser.add_argument('--dataset', dest='dataset', default='VIOT',
                     help='datasets')
-parser.add_argument('-l', '--log', default="log_test_VOT2016.txt", type=str, help='log file')
+parser.add_argument('-l', '--log', default="log_test_VIOT.txt", type=str, help='log file')
 parser.add_argument('-v', '--visualization', dest='visualization', action='store_true',
                     help='whether visualize result',default=True)
 parser.add_argument('--gt', action='store_true', help='whether use gt rect for davis (Oracle)')
@@ -98,16 +101,22 @@ def create_tracker(tracker_type):
 def track_vot(tracker_type, video):
 
     regions = []  # result and states[1 init / 2 lost / 0 skip]
-    image_files, gt = video['image_files'], video['gt']
+    image_files, states, gt = video['image_files'], video['states'], video['gt']
 
     start_frame, end_frame, lost_times, toc = 0, len(image_files), 0, 0
 
     for f, image_file in enumerate(image_files):
         im = cv2.imread(image_file)
         tic = cv2.getTickCount()
-        my_rect = (200,200,100,100)
+
         if f == start_frame:  # init
             tracker=create_tracker(tracker_type)
+
+            ## kinematic model for MAVIC Mini with horizontal field of view (hfov)
+            ## equal to 66 deg.
+            kin = CameraKinematics(im.shape[1]/2, im.shape[0]/2, w=im.shape[1]\
+                                    , h=im.shape[0], hfov=66.0)
+
             if tracker_type=='LDES':
                 tracker.init(im,gt[f])
                 if tracker.polygon is True:
@@ -126,8 +135,8 @@ def track_vot(tracker_type, video):
                 tracker.init(im,((cx-w/2),(cy-h/2),(w),(h)))
             regions.append(1 if 'VOT' in args.dataset else gt[f])
         elif f > start_frame:
-            # location=tracker.update(im)
-            location=tracker.update(im, FI=my_rect)
+            location=tracker.update(im)
+            # location=tracker.update(im, FI=my_rect)
 
             if 'VOT' in args.dataset:
                 b_overlap = region.vot_overlap(gt[f],location, (im.shape[1], im.shape[0]))
@@ -158,10 +167,16 @@ def track_vot(tracker_type, video):
                 location = [int(l) for l in location]
                 cv2.rectangle(im_show, (location[0], location[1]),
                               (location[0] + location[2], location[1] + location[3]), (0, 255, 255), 3)
+
+                ## estimating target location using kinematc model
+                est_loc = kin.updateRect([states[f,2], states[f,1], states[f,0]], location)
+                cv2.rectangle(im_show, (est_loc[0], est_loc[1]),
+                              (est_loc[0] + est_loc[2], est_loc[1] + est_loc[3]), (255, 255, 0), 3)
+
             cv2.putText(im_show, str(f), (40, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
             cv2.putText(im_show, str(lost_times), (40, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
 
-            cv2.rectangle(im_show, my_rect, (0, 0, 255), 3)
+            # cv2.rectangle(im_show, my_rect, (0, 0, 255), 3)
 
             cv2.imshow(video['name'], im_show)
             cv2.waitKey(100)
