@@ -47,17 +47,22 @@ class MOSSE(BaseCF):
         current_frame=current_frame.astype(np.float32)/255
         Hi=self._Ai/self._Bi
 
+        ## this section is added to get search zone based on camera orientation
+        ## if the estimated search zone is provided through FI
         if FI is None:
             fi=cv2.getRectSubPix(current_frame,(int(round(self.w)),int(round(self.h))),self._center)
         else:
             fi=cv2.getRectSubPix(current_frame,(int(round(self.w)),int(round(self.h))),(int(round(FI[0]+FI[2]/2)),int(round(FI[1]+FI[3]/2))))
 
-        # cv2.imshow("test", fi)
         fi=self._preprocessing(fi,self.cos_window)
         Gi=Hi*np.fft.fft2(fi)
         gi=np.real(np.fft.ifft2(Gi))
-        if vis is True:
-            self.score=gi
+
+        # if vis is True:
+        #     self.score=gi
+
+        self.score=gi ## VIOT
+
         curr=np.unravel_index(np.argmax(gi, axis=None),gi.shape)
         dy,dx=curr[0]-(self.h/2),curr[1]-(self.w/2)
         x_c,y_c=self._center

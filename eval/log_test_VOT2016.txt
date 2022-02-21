@@ -174,3 +174,4 @@
 [2022-02-20 04:14:53,119-rk0-get_custom_dataset_result.py#215] Total Lost: 48
 [2022-02-20 04:14:53,119-rk0-get_custom_dataset_result.py#217] Mean Speed: 945.11 FPS
 [2022-02-20 04:15:19,261-rk0-get_custom_dataset_result.py#197] Namespace(dataset='VOT2016', gt=False, log='log_test_VOT2016.txt', visualization=True)
+[2022-02-21 15:35:50,751-rk0-compare_trackers.py#176] Namespace(dataset='VOT2016', gt=False, log='log_test_VOT2016.txt', visualization=True)

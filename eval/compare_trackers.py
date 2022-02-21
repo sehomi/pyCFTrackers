@@ -31,11 +31,14 @@ from cftracker.opencv_cftracker import OpenCVCFTracker
 
 from lib.eco.config import vot16_deep_config,vot16_hc_config
 from cftracker.config import ldes_config,dsst_config,csrdcf_config,staple_config,mkcf_up_config,mccth_staple_config
+
+from kinematics.camera_kinematics import CameraKinematics
+
 parser = argparse.ArgumentParser(description='Test')
 
-parser.add_argument('--dataset', dest='dataset', default='VOT2016',
+parser.add_argument('--dataset', dest='dataset', default='VIOT',
                     help='datasets')
-parser.add_argument('-l', '--log', default="log_test_VOT2016.txt", type=str, help='log file')
+parser.add_argument('-l', '--log', default="log_test_VIOT.txt", type=str, help='log file')
 parser.add_argument('-v', '--visualization', dest='visualization', action='store_true',
                     help='whether visualize result',default=True)
 parser.add_argument('--gt', action='store_true', help='whether use gt rect for davis (Oracle)')
@@ -102,6 +105,12 @@ def track_vot(tracker_types, colors, video):
 
     start_frame, end_frame, lost_times, toc = 0, len(image_files), 0, 0
 
+    ## kinematic model for MAVIC Mini with horizontal field of view (hfov)
+    ## equal to 66 deg.
+    im = cv2.imread(image_files[0])
+    kin = CameraKinematics(im.shape[1]/2, im.shape[0]/2, w=im.shape[1]\
+                            , h=im.shape[0], hfov=66.0)
+                            
     trackers = []
     for f, image_file in enumerate(image_files):
         im = cv2.imread(image_file)
@@ -143,7 +152,7 @@ def track_vot(tracker_types, colors, video):
 
             cv2.imshow(video['name'], im_show)
             cv2.imwrite('/home/hojat/Desktop/runs/seqs/'+video['name']+'/'+str(f)+'.jpg', im_show)
-            cv2.waitKey(1)
+            cv2.waitKey(100)
     toc /= cv2.getTickFrequency()
 
     # save result
@@ -182,8 +191,11 @@ def main():
     total_lost = 0  # VOT
     speed_list = []
 
-    trackers=['MOSSE','CSK','KCF','DSST','Staple','OPENCV-CSRDCF','STRCF']
-    colors = [(240, 79, 67), (204, 120, 41), (204, 193, 41), (139, 204, 41), (41, 204, 114), (90, 41, 204), (204, 41, 177)]
+    # trackers=['MOSSE','CSK','KCF','DSST','Staple','OPENCV-CSRDCF','STRCF']
+    # colors = [(240, 79, 67), (204, 120, 41), (204, 193, 41), (139, 204, 41), (41, 204, 114), (90, 41, 204), (204, 41, 177)]
+
+    trackers=['MOSSE']
+    colors = [(240, 79, 67)]
 
 
     for v_id, video in enumerate(dataset.keys(), start=1):

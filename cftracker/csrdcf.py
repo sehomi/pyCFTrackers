@@ -150,8 +150,15 @@ class CSRDCF(BaseCF):
         self.chann_w=chann_w/np.sum(chann_w)
 
 
-    def update(self,current_frame,vis=False):
-        f=self.get_csr_features(current_frame,self._center,self.current_scale_factor,
+    def update(self,current_frame,vis=False,FI=None):
+        ## this section is added to get search zone based on camera orientation
+        ## if the estimated search zone is provided through FI
+        if FI is None:
+            search_zone_center=self._center
+        else:
+            search_zone_center=[int(FI[0]+FI[2]/2),int(FI[1]+FI[3]/2)]
+
+        f=self.get_csr_features(current_frame,search_zone_center,self.current_scale_factor,
                                 self.template_size,self.rescale_template_size,self.cell_size)
         f=f*self._window[:,:,None]
         if self.use_channel_weights is True:
@@ -622,23 +629,3 @@ class Segment:
     @staticmethod
     def _gaussian(x2,y2,std2):
         return np.exp(-(x2+y2)/(2*std2))/(2*np.pi*std2)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

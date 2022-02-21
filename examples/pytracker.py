@@ -1,6 +1,6 @@
 import cv2
 import numpy as np
-from lib.utils import get_img_list,get_ground_truthes,APCE,PSR
+from lib.utils import get_img_list,get_states_data,get_ground_truthes,get_ground_truthes_viot,APCE,PSR
 from cftracker.mosse import MOSSE
 from cftracker.csk import CSK
 from cftracker.kcf import KCF
@@ -18,14 +18,21 @@ from cftracker.strcf import STRCF
 from cftracker.mccth_staple import MCCTHStaple
 from lib.eco.config import otb_deep_config,otb_hc_config
 from cftracker.config import staple_config,ldes_config,dsst_config,csrdcf_config,mkcf_up_config,mccth_staple_config
+
+from kinematics.camera_kinematics import CameraKinematics
+
 class PyTracker:
     def __init__(self,img_dir,tracker_type,dataset_config):
         self.img_dir=img_dir
         self.tracker_type=tracker_type
         self.frame_list = get_img_list(img_dir)
         self.frame_list.sort()
-        dataname=img_dir.split('/')[-2]
-        self.gts=get_ground_truthes(img_dir[:-4])
+        # dataname=img_dir.split('/')[-2]
+        dataname=img_dir.split('/')[-1] ## VIOT
+        # self.gts=get_ground_truthes(img_dir[:-4])
+        self.gts=get_ground_truthes_viot(img_dir) ## VIOT
+        self.states=get_states_data(img_dir) ## VIOT
+
         if dataname in dataset_config.frames.keys():
             start_frame,end_frame=dataset_config.frames[dataname][0:2]
             if dataname!='David':
@@ -100,19 +107,43 @@ class PyTracker:
         if verbose is True and video_path is not None:
             writer = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 30, (init_frame.shape[1], init_frame.shape[0]))
 
+        ## kinematic model for MAVIC Mini with horizontal field of view (hfov)
+        ## equal to 66 deg.
+        kin = CameraKinematics(init_frame.shape[1]/2, init_frame.shape[0]/2,\
+                                w=init_frame.shape[1], h=init_frame.shape[0], hfov=66.0)
+        psr0=None
+        est_loc=init_gt
+
         for idx in range(len(self.frame_list)):
             if idx != 0:
                 current_frame=cv2.imread(self.frame_list[idx])
                 height,width=current_frame.shape[:2]
-                bbox=self.tracker.update(current_frame,vis=verbose)
+                bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc)
+
+                ## evaluating tracked target
+                apce = APCE(self.tracker.score)
+                psr = PSR(self.tracker.score)
+                F_max = np.max(self.tracker.score)
+
+                if psr0 is None: psr0=psr
+
+                ## estimating target location using kinematc model
+                print(psr/psr0)
+                if psr/psr0 > 0.1:
+                    est_loc = kin.updateRect([self.states[idx,0], self.states[idx,1], \
+                                              self.states[idx,2]], bbox)
+                else:
+                    est_loc = kin.updateRect([self.states[idx,0], self.states[idx,1], \
+                                              self.states[idx,2]], None)
+
                 x1,y1,w,h=bbox
                 if verbose is True:
                     if len(current_frame.shape)==2:
                         current_frame=cv2.cvtColor(current_frame,cv2.COLOR_GRAY2BGR)
                     score = self.tracker.score
-                    apce = APCE(score)
-                    psr = PSR(score)
-                    F_max = np.max(score)
+                    # apce = APCE(score)
+                    # psr = PSR(score)
+                    # F_max = np.max(score)
                     size=self.tracker.crop_size
                     score = cv2.resize(score, size)
                     score -= score.min()
@@ -144,14 +175,14 @@ class PyTracker:
                     score_map = cv2.addWeighted(crop_img, 0.6, score, 0.4, 0)
                     current_frame[ymin:ymax, xmin:xmax] = score_map
                     show_frame=cv2.rectangle(current_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (255, 0, 0),1)
-                    """
+
                     cv2.putText(show_frame, 'APCE:' + str(apce)[:5], (0, 250), cv2.FONT_HERSHEY_COMPLEX, 2,
                                 (0, 0, 255), 5)
                     cv2.putText(show_frame, 'PSR:' + str(psr)[:5], (0, 300), cv2.FONT_HERSHEY_COMPLEX, 2,
                                 (255, 0, 0), 5)
                     cv2.putText(show_frame, 'Fmax:' + str(F_max)[:5], (0, 350), cv2.FONT_HERSHEY_COMPLEX, 2,
                                 (255, 0, 0), 5)
-                    """
+
 
                     cv2.imshow('demo', show_frame)
                     if writer is not None:
@@ -160,4 +191,3 @@ class PyTracker:
 
             poses.append(np.array([int(x1), int(y1), int(w), int(h)]))
         return np.array(poses)
-

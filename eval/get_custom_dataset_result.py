@@ -105,17 +105,18 @@ def track_vot(tracker_type, video):
 
     start_frame, end_frame, lost_times, toc = 0, len(image_files), 0, 0
 
+    ## kinematic model for MAVIC Mini with horizontal field of view (hfov)
+    ## equal to 66 deg.
+    im = cv2.imread(image_files[0])
+    kin = CameraKinematics(im.shape[1]/2, im.shape[0]/2, w=im.shape[1]\
+                            , h=im.shape[0], hfov=66.0)
+
     for f, image_file in enumerate(image_files):
         im = cv2.imread(image_file)
         tic = cv2.getTickCount()
 
         if f == start_frame:  # init
             tracker=create_tracker(tracker_type)
-
-            ## kinematic model for MAVIC Mini with horizontal field of view (hfov)
-            ## equal to 66 deg.
-            kin = CameraKinematics(im.shape[1]/2, im.shape[0]/2, w=im.shape[1]\
-                                    , h=im.shape[0], hfov=66.0)
 
             if tracker_type=='LDES':
                 tracker.init(im,gt[f])
@@ -133,12 +134,12 @@ def track_vot(tracker_type, video):
                 target_sz = np.array([w, h])
                 location=cxy_wh_2_rect(target_pos,target_sz)
                 tracker.init(im,((cx-w/2),(cy-h/2),(w),(h)))
-            regions.append(1 if 'VOT' in args.dataset else gt[f])
+            regions.append(1 if ('VOT' in args.dataset or 'VIOT' in args.dataset) else gt[f])
         elif f > start_frame:
             location=tracker.update(im)
             # location=tracker.update(im, FI=my_rect)
 
-            if 'VOT' in args.dataset:
+            if 'VOT' in args.dataset or 'VIOT' in args.dataset:
                 b_overlap = region.vot_overlap(gt[f],location, (im.shape[1], im.shape[0]))
             else:
                 b_overlap = 1
@@ -147,7 +148,7 @@ def track_vot(tracker_type, video):
             else:  # lost
                 regions.append(2)
                 lost_times += 1
-                start_frame = f + 5  # skip 5 frames
+                # start_frame = f + 5  # skip 5 frames
         else:  # skip
             regions.append(0)
         toc += cv2.getTickCount() - tic
@@ -171,7 +172,7 @@ def track_vot(tracker_type, video):
                 ## estimating target location using kinematc model
                 est_loc = kin.updateRect([states[f,2], states[f,1], states[f,0]], location)
                 cv2.rectangle(im_show, (est_loc[0], est_loc[1]),
-                              (est_loc[0] + est_loc[2], est_loc[1] + est_loc[3]), (255, 255, 0), 3)
+                              (est_loc[0] + est_loc[2], est_loc[1] + est_loc[3]), (0, 0, 255), 3)
 
             cv2.putText(im_show, str(f), (40, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 255), 2)
             cv2.putText(im_show, str(lost_times), (40, 80), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
