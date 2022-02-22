@@ -111,30 +111,32 @@ class PyTracker:
         ## equal to 66 deg.
         kin = CameraKinematics(init_frame.shape[1]/2, init_frame.shape[0]/2,\
                                 w=init_frame.shape[1], h=init_frame.shape[0], hfov=66.0)
-        psr0=None
+        psr0=-1
+        psr=-1
+        ratio_thresh=0.1
         est_loc=init_gt
 
         for idx in range(len(self.frame_list)):
             if idx != 0:
                 current_frame=cv2.imread(self.frame_list[idx])
                 height,width=current_frame.shape[:2]
-                bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc)
+                # bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc)
+                bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc, \
+                                        do_learning=psr/psr0>ratio_thresh) ## VIOT
 
                 ## evaluating tracked target
                 apce = APCE(self.tracker.score)
                 psr = PSR(self.tracker.score)
                 F_max = np.max(self.tracker.score)
 
-                if psr0 is None: psr0=psr
+                if psr0 is -1: psr0=psr
 
                 ## estimating target location using kinematc model
-                print(psr/psr0)
-                if psr/psr0 > 0.1:
-                    est_loc = kin.updateRect([self.states[idx,0], self.states[idx,1], \
-                                              self.states[idx,2]], bbox)
+                # print("psr ratio: ",psr/psr0, " learning: ", psr/psr0 > ratio_thresh)
+                if psr/psr0 > ratio_thresh:
+                    est_loc = kin.updateRect(self.states[idx,:], bbox)
                 else:
-                    est_loc = kin.updateRect([self.states[idx,0], self.states[idx,1], \
-                                              self.states[idx,2]], None)
+                    est_loc = kin.updateRect(self.states[idx,:], None)
 
                 x1,y1,w,h=bbox
                 if verbose is True:

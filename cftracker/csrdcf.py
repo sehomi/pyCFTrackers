@@ -150,7 +150,7 @@ class CSRDCF(BaseCF):
         self.chann_w=chann_w/np.sum(chann_w)
 
 
-    def update(self,current_frame,vis=False,FI=None):
+    def update(self,current_frame,vis=False,FI=None,do_learning=True):
         ## this section is added to get search zone based on camera orientation
         ## if the estimated search zone is provided through FI
         if FI is None:
@@ -209,6 +209,12 @@ class CSRDCF(BaseCF):
         dx=self.current_scale_factor*self.cell_size*(1/self.rescale_ratio)*col
         dy=self.current_scale_factor*self.cell_size*(1/self.rescale_ratio)*row
         self._center=(self._center[0]+dx,self._center[1]+dy)
+
+        ## do not update template when target is lost
+        if not do_learning:
+            region=[np.round(self._center[0] - self.target_sz[0] / 2),np.round( self._center[1] - self.target_sz[1] / 2),
+                            self.target_sz[0], self.target_sz[1]]
+            return region
 
         self.current_scale_factor = self.scale_estimator.update(current_frame, self._center, self.base_target_sz,
                                                                 self.current_scale_factor)
