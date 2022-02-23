@@ -51,6 +51,3 @@ class CSRDCFLPConfig:
         init_scale_factor=1.
 
     scale_config = ScaleConfig()
-
-
-

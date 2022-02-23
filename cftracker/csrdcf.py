@@ -208,7 +208,8 @@ class CSRDCF(BaseCF):
         # displacement
         dx=self.current_scale_factor*self.cell_size*(1/self.rescale_ratio)*col
         dy=self.current_scale_factor*self.cell_size*(1/self.rescale_ratio)*row
-        self._center=(self._center[0]+dx,self._center[1]+dy)
+        # self._center=(self._center[0]+dx,self._center[1]+dy)
+        self._center=(search_zone_center[0]+dx,search_zone_center[1]+dy) ## VIOT
 
         ## do not update template when target is lost
         if not do_learning:

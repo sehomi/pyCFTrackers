@@ -30,7 +30,7 @@ class CameraKinematics:
         self._inertia_dir_before = np.array( [0,0,0] )
         self._inertia_dir_after = np.array( [0,0,0] )
         self._last_rect = (0,0,0,0)
-        self._interp_factor=0
+        self._interp_factor=0.3
 
         self._fig_3d=plt.figure()
         self._ax_3d=plt.axes(projection ='3d')
@@ -58,32 +58,6 @@ class CameraKinematics:
 
         ## return the vector in body coordinates
         return np.matmul(DCM_bi, in_vec)
-
-
-    # def body_to_inertia(self, body_vec, eul):
-    #
-    #     if body_vec is None:
-    #         return None
-    #
-    #     ## calculate a "DCM" using euler angles of camera body, to convert vector
-    #     ## from body to inertial coordinates
-    #     r = R.from_euler('zyx', eul, degrees=False)
-    #
-    #     ## return the vector in inertial coordinates
-    #     return np.matmul(r.as_matrix(), body_vec)
-    #
-    #
-    # def inertia_to_body(self, in_vec, eul):
-    #
-    #     ## calculate a transformation using euler angles
-    #     r = R.from_euler('zyx', eul, degrees=False)
-    #
-    #     ## calculate a DCM and find transpose that takes inertial to body
-    #     DCM_bi = r.as_matrix().T
-    #
-    #     ## return vector in body coordinates
-    #     return np.matmul(DCM_bi, in_vec)
-
 
 
     def cam_to_body(self, rect):
@@ -205,8 +179,6 @@ class CameraKinematics:
 
 
     def get_camera_frame_vecs(self, eul, w, h):
-
-        print(eul)
 
         ## convert image corners from a point in "image coordinates" to a vector
         ## in "camera body coordinates"

@@ -120,9 +120,10 @@ class PyTracker:
             if idx != 0:
                 current_frame=cv2.imread(self.frame_list[idx])
                 height,width=current_frame.shape[:2]
+                bbox=self.tracker.update(current_frame,vis=verbose)
                 # bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc)
-                bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc, \
-                                        do_learning=psr/psr0>ratio_thresh) ## VIOT
+                # bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc, \
+                #                         do_learning=psr/psr0>ratio_thresh) ## VIOT
 
                 ## evaluating tracked target
                 apce = APCE(self.tracker.score)
@@ -132,11 +133,11 @@ class PyTracker:
                 if psr0 is -1: psr0=psr
 
                 ## estimating target location using kinematc model
-                # print("psr ratio: ",psr/psr0, " learning: ", psr/psr0 > ratio_thresh)
                 if psr/psr0 > ratio_thresh:
                     est_loc = kin.updateRect(self.states[idx,:], bbox)
                 else:
                     est_loc = kin.updateRect(self.states[idx,:], None)
+                print("psr ratio: ",psr/psr0, " learning: ", psr/psr0 > ratio_thresh, " est: ", est_loc)
 
                 x1,y1,w,h=bbox
                 if verbose is True:
