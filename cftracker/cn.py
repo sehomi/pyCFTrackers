@@ -49,8 +49,16 @@ class CN(BaseCF):
         self.alphaf_den=kf*(kf+self.lambda_)
 
 
-    def update(self,current_frame,vis=False):
-        z=self.get_sub_window(current_frame,self._center,self.crop_size)
+    def update(self,current_frame,vis=False,FI=None,do_learning=True):
+
+        ## this section is added to get search zone based on camera orientation
+        ## if the estimated search zone is provided through FI
+        if FI is None:
+            search_zone_center=self._center
+        else:
+            search_zone_center=(int(FI[0]+FI[2]/2),int(FI[1]+FI[3]/2))
+
+        z=self.get_sub_window(current_frame,search_zone_center,self.crop_size)
         z=self._window[:,:,None]*z
         kf=fft2(self._dgk(self.x,z))
         responses=np.real(ifft2(self.alphaf_num*kf.conj()/(self.alphaf_den)))
@@ -59,10 +67,17 @@ class CN(BaseCF):
         curr=np.unravel_index(np.argmax(responses,axis=None),responses.shape)
         dy=self._init_response_center[0]-curr[0]
         dx=self._init_response_center[1]-curr[1]
-        x_c, y_c = self._center
+
+        # x_c, y_c = self._center
+        x_c, y_c = search_zone_center ## VIOT
         x_c -= dx
         y_c -= dy
         self._center = (x_c, y_c)
+
+        ## do not update template when target is lost
+        if not do_learning:
+            return [self._center[0]-self.w/2,self._center[1]-self.h/2,self.w,self.h]
+
         new_x=self.get_sub_window(current_frame,self._center,self.crop_size)
         new_x=new_x*self._window[:,:,None]
 
@@ -86,6 +101,3 @@ class CN(BaseCF):
         d =xx + yy- 2 * xy
         k = np.exp(-1 / self.sigma ** 2 * np.clip(d,a_min=0,a_max=None) / np.size(x1))
         return k
-
-
-

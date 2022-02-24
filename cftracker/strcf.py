@@ -164,16 +164,24 @@ class STRCF(BaseCF):
         self.f_pre_f_hc=self.ADMM(xlf_hc,f_pre_f_hc,mu_hc)
 
 
-    def update(self,current_frame,vis=False):
+    def update(self,current_frame,vis=False,FI=None,do_learning=True):
         assert len(current_frame.shape) == 3 and current_frame.shape[2] == 3
         old_pos=(np.inf,np.inf)
         iter=1
-        while iter<=self.refinement_iterations and (np.abs(old_pos[0]-self._center[0])>1e-2 or
-                                                    np.abs(old_pos[1]-self._center[1])>1e-2):
+
+        ## this section is added to get search zone based on camera orientation
+        ## if the estimated search zone is provided through FI
+        if FI is None:
+            search_zone_center=self._center
+        else:
+            search_zone_center=(int(FI[0]+FI[2]/2),int(FI[1]+FI[3]/2))
+
+        while iter<=self.refinement_iterations and (np.abs(old_pos[0]-search_zone_center[0])>1e-2 or
+                                                    np.abs(old_pos[1]-search_zone_center[1])>1e-2):
 
             sample_scales=self.sc*self.scale_factors
             xt_hc = None
-            sample_pos=(int(np.round(self._center[0])),int(np.round(self._center[1])))
+            sample_pos=(int(np.round(search_zone_center[0])),int(np.round(search_zone_center[1])))
             for scale in sample_scales:
                 sub_window = self.get_sub_window(current_frame, sample_pos, model_sz=self.crop_size,
                                                  scaled_sz=(int(round(self.crop_size[0] * scale)),
@@ -217,6 +225,12 @@ class STRCF(BaseCF):
                 self.sc = np.clip(self.sc, a_min=self._min_scale_factor,
                                                     a_max=self._max_scale_factor)
             iter+=1
+
+        ## do not update template when target is lost
+        if not do_learning:
+            target_sz=(self.base_target_sz[0]*self.sc,self.base_target_sz[1]*self.sc)
+            return [(self._center[0] - (target_sz[0]) / 2), (self._center[1] -(target_sz[1]) / 2), target_sz[0],target_sz[1]]
+
         sample_pos=(int(np.round(self._center[0])),int(np.round(self._center[1])))
         patch = self.get_sub_window(current_frame, sample_pos, model_sz=self.crop_size,
                                          scaled_sz=(int(np.round(self.crop_size[0] * self.sc)),
@@ -342,12 +356,3 @@ class STRCF(BaseCF):
         if self.config.square_root_normalization:
             x = np.sign(x) * np.sqrt(np.abs(x))
         return x.astype(np.float32)
-
-
-
-
-
-
-
-
-

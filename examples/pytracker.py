@@ -35,11 +35,11 @@ class PyTracker:
 
         if dataname in dataset_config.frames.keys():
             start_frame,end_frame=dataset_config.frames[dataname][0:2]
-            if dataname!='David':
-                self.init_gt=self.gts[start_frame-1]
-            else:
-                self.init_gt=self.gts[0]
+            self.init_gt=self.gts[start_frame-1]
+
             self.frame_list=self.frame_list[start_frame-1:end_frame]
+            self.states=self.states[start_frame-1:end_frame]
+
         else:
             self.init_gt=self.gts[0]
         if self.tracker_type == 'MOSSE':
@@ -56,42 +56,60 @@ class PyTracker:
             self.tracker=Staple(config=staple_config.StapleCAConfig())
         elif self.tracker_type=='KCF_CN':
             self.tracker=KCF(features='cn',kernel='gaussian')
+            self.ratio_thresh=0.8
         elif self.tracker_type=='KCF_GRAY':
             self.tracker=KCF(features='gray',kernel='gaussian')
+            self.ratio_thresh=0.8
         elif self.tracker_type=='KCF_HOG':
             self.tracker=KCF(features='hog',kernel='gaussian')
+            self.ratio_thresh=0.1
         elif self.tracker_type=='DCF_GRAY':
             self.tracker=KCF(features='gray',kernel='linear')
+            self.ratio_thresh=0.1
         elif self.tracker_type=='DCF_HOG':
             self.tracker=KCF(features='hog',kernel='linear')
+            self.ratio_thresh=0.1
         elif self.tracker_type=='DAT':
             self.tracker=DAT()
+            self.ratio_thresh=0.1
         elif self.tracker_type=='ECO-HC':
             self.tracker=ECO(config=otb_hc_config.OTBHCConfig())
         elif self.tracker_type=='ECO':
             self.tracker=ECO(config=otb_deep_config.OTBDeepConfig())
+            self.ratio_thresh=0.6
         elif self.tracker_type=='BACF':
             self.tracker=BACF()
+            self.ratio_thresh=0.2
         elif self.tracker_type=='CSRDCF':
             self.tracker=CSRDCF(config=csrdcf_config.CSRDCFConfig())
+            self.ratio_thresh=0.1
         elif self.tracker_type=='CSRDCF-LP':
             self.tracker=CSRDCF(config=csrdcf_config.CSRDCFLPConfig())
+            self.ratio_thresh=0.1
         elif self.tracker_type=='SAMF':
             self.tracker=SAMF()
+            self.ratio_thresh=0.1
         elif self.tracker_type=='LDES':
             self.tracker=LDES(ldes_config.LDESDemoLinearConfig())
+            self.ratio_thresh=0.1
         elif self.tracker_type=='DSST-LP':
             self.tracker=DSST(dsst_config.DSSTLPConfig())
+            self.ratio_thresh=0.1
         elif self.tracker_type=='MKCFup':
             self.tracker=MKCFup(config=mkcf_up_config.MKCFupConfig())
+            self.ratio_thresh=0.1
         elif self.tracker_type=='MKCFup-LP':
             self.tracker=MKCFup(config=mkcf_up_config.MKCFupLPConfig())
+            self.ratio_thresh=0.1
         elif self.tracker_type=='STRCF':
             self.tracker=STRCF()
+            self.ratio_thresh=0.25
         elif self.tracker_type=='MCCTH-Staple':
             self.tracker=MCCTHStaple(config=mccth_staple_config.MCCTHOTBConfig())
+            self.ratio_thresh=0.1
         elif self.tracker_type=='MCCTH':
             self.tracker=MCCTH(config=mccth_config.MCCTHConfig())
+            self.ratio_thresh=0.1
         else:
             raise NotImplementedError
 
@@ -113,17 +131,16 @@ class PyTracker:
                                 w=init_frame.shape[1], h=init_frame.shape[0], hfov=66.0)
         psr0=-1
         psr=-1
-        ratio_thresh=0.1
         est_loc=init_gt
 
         for idx in range(len(self.frame_list)):
             if idx != 0:
                 current_frame=cv2.imread(self.frame_list[idx])
                 height,width=current_frame.shape[:2]
-                bbox=self.tracker.update(current_frame,vis=verbose)
+                # bbox=self.tracker.update(current_frame,vis=verbose)
                 # bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc)
-                # bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc, \
-                #                         do_learning=psr/psr0>ratio_thresh) ## VIOT
+                bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc, \
+                                        do_learning=psr/psr0>self.ratio_thresh) ## VIOT
 
                 ## evaluating tracked target
                 apce = APCE(self.tracker.score)
@@ -133,11 +150,11 @@ class PyTracker:
                 if psr0 is -1: psr0=psr
 
                 ## estimating target location using kinematc model
-                if psr/psr0 > ratio_thresh:
+                if psr/psr0 > self.ratio_thresh:
                     est_loc = kin.updateRect(self.states[idx,:], bbox)
                 else:
                     est_loc = kin.updateRect(self.states[idx,:], None)
-                print("psr ratio: ",psr/psr0, " learning: ", psr/psr0 > ratio_thresh, " est: ", est_loc)
+                # print("psr ratio: ",psr/psr0, " learning: ", psr/psr0 > self.ratio_thresh, " est: ", est_loc)
 
                 x1,y1,w,h=bbox
                 if verbose is True:
@@ -179,12 +196,12 @@ class PyTracker:
                     current_frame[ymin:ymax, xmin:xmax] = score_map
                     show_frame=cv2.rectangle(current_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (255, 0, 0),1)
 
-                    cv2.putText(show_frame, 'APCE:' + str(apce)[:5], (0, 250), cv2.FONT_HERSHEY_COMPLEX, 2,
-                                (0, 0, 255), 5)
-                    cv2.putText(show_frame, 'PSR:' + str(psr)[:5], (0, 300), cv2.FONT_HERSHEY_COMPLEX, 2,
-                                (255, 0, 0), 5)
-                    cv2.putText(show_frame, 'Fmax:' + str(F_max)[:5], (0, 350), cv2.FONT_HERSHEY_COMPLEX, 2,
-                                (255, 0, 0), 5)
+                    # cv2.putText(show_frame, 'APCE:' + str(apce)[:5], (0, 250), cv2.FONT_HERSHEY_COMPLEX, 2,
+                    #             (0, 0, 255), 5)
+                    # cv2.putText(show_frame, 'PSR:' + str(psr)[:5], (0, 300), cv2.FONT_HERSHEY_COMPLEX, 2,
+                    #             (255, 0, 0), 5)
+                    # cv2.putText(show_frame, 'Fmax:' + str(F_max)[:5], (0, 350), cv2.FONT_HERSHEY_COMPLEX, 2,
+                    #             (255, 0, 0), 5)
 
 
                     cv2.imshow('demo', show_frame)

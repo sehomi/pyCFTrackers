@@ -377,4 +377,3 @@ def get_sub_window(frame,center,sz):
     if border!=(0,0,0,0):
         sub_window=cv2.copyMakeBorder(sub_window,border[1],border[3],border[0],border[2],cv2.BORDER_REPLICATE)
     return sub_window
-

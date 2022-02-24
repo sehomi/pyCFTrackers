@@ -68,21 +68,30 @@ class KCF(BaseCF):
         self.alphaf = self._training(self.xf,self.yf)
 
 
-    def update(self,current_frame,vis=False):
+    def update(self,current_frame,vis=False,FI=None,do_learning=True):
         assert len(current_frame.shape) == 3 and current_frame.shape[2] == 3
+
+        ## this section is added to get search zone based on camera orientation
+        ## if the estimated search zone is provided through FI
+        if FI is None:
+            search_zone_center=self._center
+        else:
+            search_zone_center=(int(FI[0]+FI[2]/2),int(FI[1]+FI[3]/2))
+
+
         if self.features == 'gray':
             current_frame = cv2.cvtColor(current_frame, cv2.COLOR_BGR2GRAY)
         if self.features=='color' or self.features=='gray':
             current_frame = current_frame.astype(np.float32) / 255
-            z = self._crop(current_frame, self._center, (self.w, self.h))
+            z = self._crop(current_frame, search_zone_center, (self.w, self.h))
             z=z-np.mean(z)
 
         elif self.features=='hog':
-            z = self._crop(current_frame, self._center, (self.w, self.h))
+            z = self._crop(current_frame, search_zone_center, (self.w, self.h))
             z = cv2.resize(z, (self.window_size[0] * self.cell_size, self.window_size[1] * self.cell_size))
             z = extract_hog_feature(z, cell_size=self.cell_size)
         elif self.features=='cn':
-            z = self._crop(current_frame, self._center, (self.w, self.h))
+            z = self._crop(current_frame, search_zone_center, (self.w, self.h))
             z = cv2.resize(z, (self.window_size[0] * self.cell_size, self.window_size[1] * self.cell_size))
             z = extract_cn_feature(z, cell_size=self.cell_size)
         else:
@@ -90,10 +99,10 @@ class KCF(BaseCF):
 
         zf = fft2(self._get_windowed(z, self._window))
         responses = self._detection(self.alphaf, self.xf, zf, kernel=self.kernel)
-        if vis is True:
-            self.score=responses
-            self.score = np.roll(self.score, int(np.floor(self.score.shape[0] / 2)), axis=0)
-            self.score = np.roll(self.score, int(np.floor(self.score.shape[1] / 2)), axis=1)
+
+        self.score=responses
+        self.score = np.roll(self.score, int(np.floor(self.score.shape[0] / 2)), axis=0)
+        self.score = np.roll(self.score, int(np.floor(self.score.shape[1] / 2)), axis=1)
 
         curr =np.unravel_index(np.argmax(responses, axis=None),responses.shape)
 
@@ -106,10 +115,16 @@ class KCF(BaseCF):
         else:
             dx=curr[1]
         dy,dx=dy*self.cell_size,dx*self.cell_size
-        x_c, y_c = self._center
+
+        # x_c, y_c = self._center
+        x_c, y_c = search_zone_center ## VIOT
         x_c+= dx
         y_c+= dy
         self._center = (np.floor(x_c), np.floor(y_c))
+
+        ## do not update template when target is lost
+        if not do_learning:
+            return [(self._center[0] - self.w / 2), (self._center[1] - self.h / 2), self.w, self.h]
 
         if self.features=='color' or self.features=='gray':
             new_x = self._crop(current_frame, self._center, (self.w, self.h))
@@ -157,7 +172,7 @@ class KCF(BaseCF):
             img=img[:,:,np.newaxis]
         w,h=target_sz
         """
-        # the same as matlab code 
+        # the same as matlab code
         w=int(np.floor((1+self.padding)*w))
         h=int(np.floor((1+self.padding)*h))
         xs=(np.floor(center[0])+np.arange(w)-np.floor(w/2)).astype(np.int64)

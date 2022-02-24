@@ -40,7 +40,7 @@ class MOSSE(BaseCF):
             self._Bi+=Fi*np.conj(Fi)
 
 
-    def update(self,current_frame,vis=False,FI=None):
+    def update(self,current_frame,vis=False,FI=None,do_learning=True):
         if len(current_frame.shape)!=2:
             assert current_frame.shape[2]==3
             current_frame=cv2.cvtColor(current_frame,cv2.COLOR_BGR2GRAY)
@@ -65,10 +65,17 @@ class MOSSE(BaseCF):
 
         curr=np.unravel_index(np.argmax(gi, axis=None),gi.shape)
         dy,dx=curr[0]-(self.h/2),curr[1]-(self.w/2)
-        x_c,y_c=self._center
+
+        # x_c,y_c=self._center
+        x_c,y_c=(int(round(FI[0]+FI[2]/2)),int(round(FI[1]+FI[3]/2))) ## VIOT
         x_c+=dx
         y_c+=dy
         self._center=(x_c,y_c)
+
+        ## do not update template when target is lost
+        if not do_learning:
+            return [self._center[0]-self.w/2,self._center[1]-self.h/2,self.w,self.h]
+
         fi=cv2.getRectSubPix(current_frame,(int(round(self.w)),int(round(self.h))),self._center)
         fi=self._preprocessing(fi,self.cos_window)
         Fi=np.fft.fft2(fi)

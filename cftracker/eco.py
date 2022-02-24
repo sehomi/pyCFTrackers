@@ -23,19 +23,17 @@ class ECO(BaseCF):
         self.tracker.init(first_frame,bbox)
 
 
-    def update(self,current_frame,vis=False):
+    def update(self,current_frame,vis=False,FI=None,do_learning=True):
         if self.tracker._is_color is True:
             current_frame=cv2.cvtColor(current_frame,cv2.COLOR_BGR2RGB)
         else:
             current_frame=current_frame[:,:,:1]
 
-        bbox=self.tracker.update(current_frame,train=True,vis=vis)
-        if vis is True:
-            self.score=self.tracker.score
-            self.crop_size = tuple(self.tracker.crop_size.astype(np.int64))
+        # bbox=self.tracker.update(current_frame,train=True,vis=vis)
+        bbox=self.tracker.update(current_frame,train=True,vis=True,FI=FI,do_learning=True) ## VIOT
+        # if vis is True:
+        self.score=self.tracker.score
+        self.crop_size = tuple(self.tracker.crop_size.astype(np.int64))
         x1, y1, w, h = bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]
         pos = [x1, y1, w, h]
         return pos
-
-
-

@@ -263,9 +263,20 @@ class LDES(BaseCF):
 
 
 
-    def update(self,current_frame,vis=False):
-        self.vis=vis
-        pos,tmp_sc,tmp_rot,cscore,sscore=self.tracking(current_frame,self._center,0)
+    def update(self,current_frame,vis=False,FI=None,do_learning=True):
+
+        # self.vis=vis
+        self.vis=True
+
+        ## this section is added to get search zone based on camera orientation
+        ## if the estimated search zone is provided through FI
+        if FI is None:
+            search_zone_center=self._center
+        else:
+            search_zone_center=(int(FI[0]+FI[2]/2),int(FI[1]+FI[3]/2))
+
+        pos,tmp_sc,tmp_rot,cscore,sscore=self.tracking(current_frame,search_zone_center,0)
+
         if self.is_BGD:
             #print('cscore:',cscore,'  sscore:',sscore)
             cscore=(1-self.interp_n)*cscore+self.interp_n*sscore
@@ -294,6 +305,16 @@ class LDES(BaseCF):
                 pos = mpos
                 self.sc = msc
                 self.rot = mrot
+
+        ## do not update template when target is lost
+        if not do_learning:
+            x, y = pos
+            x = np.clip(x, a_min=0, a_max=current_frame.shape[1]-1)
+            y = np.clip(y, a_min=0, a_max=current_frame.shape[0]-1)
+            self._center=(x,y)
+            target_sz=(self.sc[0]*self.target_sz0[0],self.sc[1]*self.target_sz0[1])
+            box=[x-target_sz[0]/2,y-target_sz[1]/2,target_sz[0],target_sz[1]]
+            return box
 
         self.logupdate(0,current_frame,pos,tmp_sc,tmp_rot)
         x, y = pos

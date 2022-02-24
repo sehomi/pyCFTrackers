@@ -395,10 +395,17 @@ class ECOTracker:
             self._scale_filter.update(frame, self._pos, self._base_target_sz, self._current_scale_factor)
         self._frame_num += 1
 
-    def update(self, frame, train=True, vis=False):
+    def update(self, frame, train=True, vis=False, FI=None, do_learning=True):
         # target localization step
         xp = cp if gpu_config.use_gpu else np
-        pos = self._pos
+
+        ## this section is added to get search zone based on camera orientation
+        ## if the estimated search zone is provided through FI
+        if FI is None:
+            pos=self._pos
+        else:
+            pos=np.array( [int(FI[0]+FI[2]/2),int(FI[1]+FI[3]/2)] )
+
         old_pos = np.zeros((2))
         for _ in range(self.config.refinement_iterations):
             # if np.any(old_pos != pos):
@@ -465,6 +472,14 @@ class ECOTracker:
                     self._current_scale_factor = self._min_scale_factor
                 elif self._current_scale_factor > self._max_scale_factor:
                     self._current_scale_factor = self._max_scale_factor
+
+        ## do not update template when target is lost
+        if not do_learning:
+            bbox = (pos[1] - self._target_sz[1]/2, # xmin
+                    pos[0] - self._target_sz[0]/2, # ymin
+                    pos[1] + self._target_sz[1]/2, # xmax
+                    pos[0] + self._target_sz[0]/2) # ymax
+            return bbox
 
         # model udpate step
         if self.config.learning_rate > 0:

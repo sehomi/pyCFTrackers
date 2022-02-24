@@ -107,11 +107,19 @@ class BACF(BaseCF):
 
 
 
-    def update(self,current_frame,vis=False):
+    def update(self,current_frame,vis=False,FI=None,do_learning=True):
+
+        ## this section is added to get search zone based on camera orientation
+        ## if the estimated search zone is provided through FI
+        if FI is None:
+            search_zone_center=self._center
+        else:
+            search_zone_center=(int(FI[0]+FI[2]/2),int(FI[1]+FI[3]/2))
+
         x=None
         for scale_ind in range(self.number_of_scales):
             current_scale=self.current_scale_factor*self.scale_factors[scale_ind]
-            sub_window=self.get_sub_window(current_frame,self._center,model_sz=self.crop_size,
+            sub_window=self.get_sub_window(current_frame,search_zone_center,model_sz=self.crop_size,
                                         scaled_sz=(int(round(self.crop_size[0]*current_scale)),
                                     int(round(self.crop_size[1]*current_scale))))
             feature= self.extract_hc_feture(sub_window, self.cell_size)[:, :, :, np.newaxis]
@@ -163,7 +171,13 @@ class BACF(BaseCF):
         self.current_scale_factor = self.scale_estimator.update(current_frame, self._center, self.base_target_sz,
                                               self.current_scale_factor)
 
-        self._center=(self._center[0]+dx,self._center[1]+dy)
+        # self._center=(self._center[0]+dx,self._center[1]+dy)
+        self._center=(search_zone_center[0]+dx,search_zone_center[1]+dy)
+
+        ## do not update template when target is lost
+        if not do_learning:
+            target_sz=(self.target_sz[0]*self.current_scale_factor,self.target_sz[1]*self.current_scale_factor)
+            return [self._center[0]-target_sz[0]/2,self._center[1]-target_sz[1]/2,target_sz[0],target_sz[1]]
 
         pixels=self.get_sub_window(current_frame,self._center,model_sz=self.crop_size,
                                    scaled_sz=(int(round(self.crop_size[0]*self.current_scale_factor)),
@@ -240,6 +254,3 @@ class BACF(BaseCF):
         cn_feature=extract_cn_feature(patch,cell_size)
         hc_feature=np.concatenate((hog_feature,cn_feature),axis=2)
         return hc_feature
-
-
-

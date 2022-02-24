@@ -37,12 +37,20 @@ class CSK(BaseCF):
         self._init_response_center=np.unravel_index(np.argmax(self.y,axis=None),self.y.shape)
         self.alphaf=self._training(self.x,self.y)
 
-    def update(self,current_frame,vis=False):
+    def update(self,current_frame,vis=False,FI=None,do_learning=True):
         if len(current_frame.shape)==3:
             assert current_frame.shape[2]==3
             current_frame=cv2.cvtColor(current_frame,cv2.COLOR_BGR2GRAY)
         current_frame=current_frame.astype(np.float32)
-        z=cv2.getRectSubPix(current_frame,(int(round(2*self.w)),int(round(2*self.h))),self._center)/255-0.5
+
+        ## this section is added to get search zone based on camera orientation
+        ## if the estimated search zone is provided through FI
+        if FI is None:
+            search_zone_center=self._center
+        else:
+            search_zone_center=(int(FI[0]+FI[2]/2),int(FI[1]+FI[3]/2))
+
+        z=cv2.getRectSubPix(current_frame,(int(round(2*self.w)),int(round(2*self.h))),search_zone_center)/255-0.5
         z=z*self._window
         self.z=z
         responses=self._detection(self.alphaf,self.x,z)
@@ -51,10 +59,17 @@ class CSK(BaseCF):
         curr=np.unravel_index(np.argmax(responses,axis=None),responses.shape)
         dy=curr[0]-self._init_response_center[0]
         dx=curr[1]-self._init_response_center[1]
-        x_c, y_c = self._center
+
+        # x_c, y_c = self._center
+        x_c, y_c = search_zone_center ## VIOT
         x_c -= dx
         y_c -= dy
         self._center = (x_c, y_c)
+
+        ## do not update template when target is lost
+        if not do_learning:
+            return [self._center[0]-self.w/2,self._center[1]-self.h/2,self.w,self.h]
+
         new_x=cv2.getRectSubPix(current_frame,(2*self.w,2*self.h),self._center)/255-0.5
         new_x=new_x*self._window
         self.alphaf=self.interp_factor*self._training(new_x,self.y)+(1-self.interp_factor)*self.alphaf
@@ -77,5 +92,3 @@ class CSK(BaseCF):
         k = self._dgk(x, z)
         responses = np.real(ifft2(alphaf * fft2(k)))
         return responses
-
-
