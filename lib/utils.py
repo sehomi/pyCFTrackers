@@ -147,6 +147,7 @@ def gaussian2d_rolled_labels(sz,sigma):
 
 
 def plot_precision(gts,preds,save_path):
+    plt.figure(2)
     # x,y,w,h
     threshes,precisions=get_thresh_precision_pair(gts,preds)
     idx20 = [i for i, x in enumerate(threshes) if x == 20][0]
@@ -176,6 +177,7 @@ def get_thresh_precision_pair(gts,preds):
 
 
 def plot_success(gts,preds,save_path):
+    plt.figure(1)
     threshes, successes=get_thresh_success_pair(gts, preds)
     plt.plot(threshes,successes,label=str(calAUC(successes))[:5])
     plt.title('Success Plot')

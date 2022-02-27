@@ -404,7 +404,8 @@ class ECOTracker:
         if FI is None:
             pos=self._pos
         else:
-            pos=np.array( [int(FI[0]+FI[2]/2),int(FI[1]+FI[3]/2)] )
+            # pos=np.array( [int(FI[0]+FI[2]/2),int(FI[1]+FI[3]/2)] )
+            pos=np.array( [int(FI[1]+FI[3]/2),int(FI[0]+FI[2]/2)] )
 
         old_pos = np.zeros((2))
         for _ in range(self.config.refinement_iterations):

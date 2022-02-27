@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class CameraKinematics:
 
-    def __init__(self, cx, cy, f=None, w=None, h=None, hfov=None):
+    def __init__(self, cx, cy, f=None, w=None, h=None, hfov=None, vis=True):
 
         self._cx = cx
         self._cy = cy
@@ -32,10 +32,12 @@ class CameraKinematics:
         self._last_rect = (0,0,0,0)
         self._interp_factor=0.3
 
-        self._fig_3d=plt.figure()
-        self._ax_3d=plt.axes(projection ='3d')
-        self._ax_3d.set_title('Kinematics Plot')
-        # self._ax_3d.view_init(elev=-45, azim=45)
+        self._vis=vis
+        if vis:
+            self._fig_3d=plt.figure(0)
+            self._ax_3d=plt.axes(projection ='3d')
+            self._ax_3d.set_title('Kinematics Plot')
+            # self._ax_3d.view_init(elev=-45, azim=45)
 
 
     def body_to_inertia(self, body_vec, eul):
@@ -156,10 +158,11 @@ class CameraKinematics:
             else:
                 return None
 
-        ## expressing camera frame by for vectors of its image corners in inertial
-        ## frame
-        corners = self.get_camera_frame_vecs(imu_meas,self._w,self._h)
-        plot_kinematics(imu_meas,self._inertia_dir_after,self._ax_3d,corners)
+        if self._vis:
+            ## expressing camera frame by for vectors of its image corners in inertial
+            ## frame
+            corners = self.get_camera_frame_vecs(imu_meas,self._w,self._h)
+            plot_kinematics(imu_meas,self._inertia_dir_after,self._ax_3d,corners)
 
         ## convert new estimate of target direction vector to body coordinates
         body_dir_est = self.inertia_to_body(self._inertia_dir_after,imu_meas)

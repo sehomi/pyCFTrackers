@@ -44,16 +44,22 @@ class PyTracker:
             self.init_gt=self.gts[0]
         if self.tracker_type == 'MOSSE':
             self.tracker=MOSSE()
+            self.ratio_thresh=0.1
         elif self.tracker_type=='CSK':
             self.tracker=CSK()
+            self.ratio_thresh=0.1
         elif self.tracker_type=='CN':
             self.tracker=CN()
+            self.ratio_thresh=0.1
         elif self.tracker_type=='DSST':
             self.tracker=DSST(dsst_config.DSSTConfig())
+            self.ratio_thresh=0.1
         elif self.tracker_type=='Staple':
             self.tracker=Staple(config=staple_config.StapleConfig())
+            self.ratio_thresh=0.1
         elif self.tracker_type=='Staple-CA':
             self.tracker=Staple(config=staple_config.StapleCAConfig())
+            self.ratio_thresh=0.1
         elif self.tracker_type=='KCF_CN':
             self.tracker=KCF(features='cn',kernel='gaussian')
             self.ratio_thresh=0.8
@@ -74,6 +80,7 @@ class PyTracker:
             self.ratio_thresh=0.1
         elif self.tracker_type=='ECO-HC':
             self.tracker=ECO(config=otb_hc_config.OTBHCConfig())
+            self.ratio_thresh=0.4
         elif self.tracker_type=='ECO':
             self.tracker=ECO(config=otb_deep_config.OTBDeepConfig())
             self.ratio_thresh=0.6
@@ -128,7 +135,8 @@ class PyTracker:
         ## kinematic model for MAVIC Mini with horizontal field of view (hfov)
         ## equal to 66 deg.
         kin = CameraKinematics(init_frame.shape[1]/2, init_frame.shape[0]/2,\
-                                w=init_frame.shape[1], h=init_frame.shape[0], hfov=66.0)
+                                w=init_frame.shape[1], h=init_frame.shape[0],\
+                                hfov=66.0, vis=False)
         psr0=-1
         psr=-1
         est_loc=init_gt
