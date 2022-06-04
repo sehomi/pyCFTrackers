@@ -136,7 +136,7 @@ if __name__ == '__main__':
         # # _,precisions_eco=get_thresh_precision_pair(gts,eco_preds)
         # _,precisions_eco_hc=get_thresh_precision_pair(gts,eco_hc_preds)
         # _,precisions_cn=get_thresh_precision_pair(gts,cn_preds)
-        # idx20=[i for i, x in enumerate(threshes) if x==20][0]
+        idx20=[i for i, x in enumerate(threshes) if x==20][0]
         #
         # plt.plot(threshes, precisions_kcf_gray, label='KCF_GRAY '+str(precisions_kcf_gray[idx20])[:5])
         plt.plot(threshes,precisions_kcf_hog,label='KCF_HOG '+str(precisions_kcf_hog[idx20])[:5])
