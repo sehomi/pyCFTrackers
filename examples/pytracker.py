@@ -99,7 +99,16 @@ class PyTracker:
             self.ratio_thresh=0.2
         elif self.tracker_type=='CSRDCF':
             self.tracker=CSRDCF(config=csrdcf_config.CSRDCFConfig())
-            self.ratio_thresh=0.3
+            try:
+                self.ratio_thresh=dataset_config.params['CSRDCF'][dataname][0]
+            except:
+                self.ratio_thresh=0.3
+
+            try:
+                self.interp_factor=dataset_config.params['CSRDCF'][dataname][1]
+            except:
+                self.interp_factor=0.3
+
         elif self.tracker_type=='CSRDCF-LP':
             self.tracker=CSRDCF(config=csrdcf_config.CSRDCFLPConfig())
             self.ratio_thresh=0.1
@@ -108,7 +117,16 @@ class PyTracker:
             self.ratio_thresh=0.1
         elif self.tracker_type=='LDES':
             self.tracker=LDES(ldes_config.LDESDemoLinearConfig())
-            self.ratio_thresh=0.1
+            try:
+                self.ratio_thresh=dataset_config.params['LDES'][dataname][0]
+            except:
+                self.ratio_thresh=0.1
+
+            try:
+                self.interp_factor=dataset_config.params['LDES'][dataname][1]
+            except:
+                self.interp_factor=0.3
+
         elif self.tracker_type=='DSST-LP':
             self.tracker=DSST(dsst_config.DSSTLPConfig())
             self.ratio_thresh=0.1
@@ -120,7 +138,16 @@ class PyTracker:
             self.ratio_thresh=0.1
         elif self.tracker_type=='STRCF':
             self.tracker=STRCF()
-            self.ratio_thresh=0.25
+            try:
+                self.ratio_thresh=dataset_config.params['STRCF'][dataname][0]
+            except:
+                self.ratio_thresh=0.25
+
+            try:
+                self.interp_factor=dataset_config.params['STRCF'][dataname][1]
+            except:
+                self.interp_factor=0.3
+
         elif self.tracker_type=='MCCTH-Staple':
             self.tracker=MCCTHStaple(config=mccth_staple_config.MCCTHOTBConfig())
             self.ratio_thresh=0.1
@@ -146,8 +173,8 @@ class PyTracker:
         ## equal to 66 deg.
         kin = CameraKinematics(self.interp_factor, init_frame.shape[1]/2, init_frame.shape[0]/2,\
                                 w=init_frame.shape[1], h=init_frame.shape[0],\
-                                hfov=self.fov, vis=True)
-        print(self.interp_factor, self.ratio_thresh)
+                                hfov=self.fov, vis=False)
+
         psr0=-1
         psr=-1
         est_loc=init_gt
@@ -173,7 +200,7 @@ class PyTracker:
                     est_loc = kin.updateRect(self.states[idx,:], bbox)
                 else:
                     est_loc = kin.updateRect(self.states[idx,:], None)
-                print("psr ratio: ",psr/psr0, " learning: ", psr/psr0 > self.ratio_thresh, " est: ", est_loc)
+                # print("psr ratio: ",psr/psr0, " learning: ", psr/psr0 > self.ratio_thresh, " est: ", est_loc)
 
                 x1,y1,w,h=bbox
                 if verbose is True:
