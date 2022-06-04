@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 
 class CameraKinematics:
 
-    def __init__(self, cx, cy, f=None, w=None, h=None, hfov=None, vis=True):
+    def __init__(self, factor, cx, cy, f=None, w=None, h=None, hfov=None, vis=True):
 
         self._cx = cx
         self._cy = cy
@@ -30,7 +30,7 @@ class CameraKinematics:
         self._inertia_dir_before = np.array( [0,0,0] )
         self._inertia_dir_after = np.array( [0,0,0] )
         self._last_rect = (0,0,0,0)
-        self._interp_factor=0.3
+        self._interp_factor=factor
 
         self._vis=vis
         if vis:
