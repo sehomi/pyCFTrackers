@@ -32,6 +32,7 @@ class PyTracker:
         # self.gts=get_ground_truthes(img_dir[:-4])
         self.gts=get_ground_truthes_viot(img_dir) ## VIOT
         self.states=get_states_data(img_dir) ## VIOT
+        self.fov=dataset_config.fov[dataname]
 
         if dataname in dataset_config.frames.keys():
             start_frame,end_frame=dataset_config.frames[dataname][0:2]
@@ -68,7 +69,16 @@ class PyTracker:
             self.ratio_thresh=0.8
         elif self.tracker_type=='KCF_HOG':
             self.tracker=KCF(features='hog',kernel='gaussian')
-            self.ratio_thresh=0.1
+            try:
+                self.ratio_thresh=dataset_config.params['KCF_HOG'][dataname][0]
+            except:
+                self.ratio_thresh=0.1
+
+            try:
+                self.interp_factor=dataset_config.params['KCF_HOG'][dataname][1]
+            except:
+                self.interp_factor=0.3
+
         elif self.tracker_type=='DCF_GRAY':
             self.tracker=KCF(features='gray',kernel='linear')
             self.ratio_thresh=0.1
@@ -80,16 +90,16 @@ class PyTracker:
             self.ratio_thresh=0.1
         elif self.tracker_type=='ECO-HC':
             self.tracker=ECO(config=otb_hc_config.OTBHCConfig())
-            self.ratio_thresh=0.4
+            self.ratio_thresh=0.5
         elif self.tracker_type=='ECO':
             self.tracker=ECO(config=otb_deep_config.OTBDeepConfig())
-            self.ratio_thresh=0.6
+            self.ratio_thresh=0.5
         elif self.tracker_type=='BACF':
             self.tracker=BACF()
             self.ratio_thresh=0.2
         elif self.tracker_type=='CSRDCF':
             self.tracker=CSRDCF(config=csrdcf_config.CSRDCFConfig())
-            self.ratio_thresh=0.1
+            self.ratio_thresh=0.3
         elif self.tracker_type=='CSRDCF-LP':
             self.tracker=CSRDCF(config=csrdcf_config.CSRDCFLPConfig())
             self.ratio_thresh=0.1
@@ -134,9 +144,10 @@ class PyTracker:
 
         ## kinematic model for MAVIC Mini with horizontal field of view (hfov)
         ## equal to 66 deg.
-        kin = CameraKinematics(init_frame.shape[1]/2, init_frame.shape[0]/2,\
+        kin = CameraKinematics(self.interp_factor, init_frame.shape[1]/2, init_frame.shape[0]/2,\
                                 w=init_frame.shape[1], h=init_frame.shape[0],\
-                                hfov=66.0, vis=False)
+                                hfov=self.fov, vis=True)
+        print(self.interp_factor, self.ratio_thresh)
         psr0=-1
         psr=-1
         est_loc=init_gt
@@ -162,7 +173,7 @@ class PyTracker:
                     est_loc = kin.updateRect(self.states[idx,:], bbox)
                 else:
                     est_loc = kin.updateRect(self.states[idx,:], None)
-                # print("psr ratio: ",psr/psr0, " learning: ", psr/psr0 > self.ratio_thresh, " est: ", est_loc)
+                print("psr ratio: ",psr/psr0, " learning: ", psr/psr0 > self.ratio_thresh, " est: ", est_loc)
 
                 x1,y1,w,h=bbox
                 if verbose is True:

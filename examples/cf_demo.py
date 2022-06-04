@@ -20,9 +20,10 @@ if __name__ == '__main__':
             start_frame,end_frame=dataset_config.frames[data_name][:2]
             gts=gts[start_frame-1:end_frame]
 
+        if data_name!="park_mavic_3": continue
         # img_dir = os.path.join(data_path,'img') ## OTB
         img_dir = data_path ## VIOT
-        tracker = PyTracker(img_dir,tracker_type='ECO-HC',dataset_config=dataset_config)
+        tracker = PyTracker(img_dir,tracker_type='CSRDCF',dataset_config=dataset_config)
         poses=tracker.tracking(verbose=True,video_path=os.path.join('../results/CF',data_name+'_vis.avi'))
-        plot_success(gts,poses,os.path.join('../results/CF',data_name+'_success.jpg'))
-        plot_precision(gts,poses,os.path.join('../results/CF',data_name+'_precision.jpg'))
+        # plot_success(gts,poses,os.path.join('../results/CF',data_name+'_success.jpg'))
+        # plot_precision(gts,poses,os.path.join('../results/CF',data_name+'_precision.jpg'))
