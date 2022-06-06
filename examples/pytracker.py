@@ -178,15 +178,24 @@ class PyTracker:
         psr0=-1
         psr=-1
         est_loc=init_gt
+        stop=False
+        last_bbox=None
 
         for idx in range(len(self.frame_list)):
             if idx != 0:
                 current_frame=cv2.imread(self.frame_list[idx])
                 height,width=current_frame.shape[:2]
-                # bbox=self.tracker.update(current_frame,vis=verbose)
-                # bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc)
-                bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc, \
-                                        do_learning=psr/psr0>self.ratio_thresh) ## VIOT
+
+                if stop:
+                    bbox=last_bbox
+                else:
+                    bbox=self.tracker.update(current_frame,vis=verbose)
+                    # bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc)
+                    # bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc, \
+                    #                         do_learning=psr/psr0>self.ratio_thresh and not stop) ## VIOT
+                    last_bbox=bbox
+
+                stop=bbox[2] > width or bbox[3] > height
 
                 ## evaluating tracked target
                 apce = APCE(self.tracker.score)
