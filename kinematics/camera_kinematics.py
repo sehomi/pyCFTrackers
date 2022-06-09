@@ -139,6 +139,7 @@ class CameraKinematics:
 
             ## calculate new estimate for target's direction vector
             self._inertia_dir_after = self._inertia_dir_before + self._diff
+            print("diff ", self._diff)
 
             ## ensure direction vector always has a length of 1
             self._inertia_dir_after = self._inertia_dir_after/np.linalg.norm(self._inertia_dir_after)

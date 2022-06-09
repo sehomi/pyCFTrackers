@@ -224,6 +224,8 @@ class PyTracker:
         else:
             raise NotImplementedError
 
+        self.viot=False
+
 
     def getETHTracker(self, name, params):
         param_module = importlib.import_module('pytracking.parameter.{}.{}'.format(name, params))
@@ -252,8 +254,12 @@ class PyTracker:
 
     def doTrack(self, current_frame, verbose, est_loc, do_learning, viot=False):
     	if self.ethTracker:
-    	    out = self.tracker.track(current_frame)
-    	    bbox = [int(s) for s in out['target_bbox']]
+            if viot:
+                out = self.tracker.track(current_frame, est_loc, do_learning=do_learning)
+            else:
+        	    out = self.tracker.track(current_frame)
+
+            bbox = [int(s) for s in out['target_bbox']]
     	else:
     	    if viot:
     	        bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc, \
@@ -284,7 +290,7 @@ class PyTracker:
         ## equal to 66 deg.
         kin = CameraKinematics(self.interp_factor, init_frame.shape[1]/2, init_frame.shape[0]/2,\
                                 w=init_frame.shape[1], h=init_frame.shape[0],\
-                                hfov=self.fov, vis=False)
+                                hfov=self.fov, vis=True)
 
         psr0=-1
         psr=-1
@@ -300,14 +306,17 @@ class PyTracker:
                 if stop:
                     bbox=last_bbox
                 else:
-                    bbox=self.doTrack(current_frame, verbose, est_loc, psr/psr0>self.ratio_thresh and not stop, viot=False)
+                    bbox=self.doTrack(current_frame, verbose, est_loc, psr/psr0>self.ratio_thresh and not stop, viot=self.viot)
                     last_bbox=bbox
 
                 stop=bbox[2] > width or bbox[3] > height
 
                 ## evaluating tracked target
                 apce = APCE(self.tracker.score)
-                psr = PSR(self.tracker.score)
+                if self.ethTracker:
+                    psr = apce
+                else:
+                    psr = PSR(self.tracker.score)
                 F_max = np.max(self.tracker.score)
 
                 if psr0 is -1: psr0=psr
@@ -334,7 +343,7 @@ class PyTracker:
                     score = (score * 255).astype(np.uint8)
                     # score = 255 - score
                     score = cv2.applyColorMap(score, cv2.COLORMAP_JET)
-                    center = (int(x1+w/2),int(y1+h/2))
+                    center = (int(x1+w/2-self.tracker.trans[1]),int(y1+h/2-self.tracker.trans[0]))
                     x0,y0=center
                     x0=np.clip(x0,0,width-1)
                     y0=np.clip(y0,0,height-1)
@@ -357,7 +366,11 @@ class PyTracker:
                     crop_img = current_frame[ymin:ymax, xmin:xmax]
                     score_map = cv2.addWeighted(crop_img, 0.6, score, 0.4, 0)
                     current_frame[ymin:ymax, xmin:xmax] = score_map
-                    show_frame=cv2.rectangle(current_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (255, 0, 0),1)
+                    show_frame=cv2.rectangle(current_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (255, 0, 0),2)
+
+                    if self.viot and not psr/psr0>self.ratio_thresh:
+                        show_frame = cv2.line(show_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (0, 0, 255), 2)
+                        show_frame = cv2.line(show_frame, (int(x1+w), int(y1)), (int(x1), int(y1 + h)), (0, 0, 255), 2)
 
                     # cv2.putText(show_frame, 'APCE:' + str(apce)[:5], (0, 250), cv2.FONT_HERSHEY_COMPLEX, 2,
                     #             (0, 0, 255), 5)
