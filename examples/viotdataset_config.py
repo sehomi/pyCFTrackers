@@ -66,6 +66,12 @@ class VIOTDatasetConfig:
                "park_mavic_3":[0.5, 0.3], "park_mavic_4":[0.5, 0.3], "park_mavic_5":[0.5, 0.3], \
                "park_mavic_6":[0.5, 0.3], "park_mavic_7":[0.5, 0.3], "soccerfield_mavic_3":[0.5, 0.3], \
                "soccerfield_mavic_4":[0.5, 0.3]},
+        "DIMP50":{"cup_0.5HZ":[0.5, 1], "cup_0.9HZ":[0.5, 1], "cup_1.1HZ":[0.5, 1], \
+                  "cup_1.5HZ":[0.5, 1], "cup_1.8HZ":[0.5, 1], "cup_2.1HZ":[0.5, 1], \
+                  "cup_3.2HZ":[0.5, 1], "park_mavic_1":[0.5, 0.3], "park_mavic_2":[0.5, 0.3], \
+                  "park_mavic_3":[0.5, 0.3], "park_mavic_4":[0.5, 0.3], "park_mavic_5":[0.5, 0.3], \
+                  "park_mavic_6":[0.5, 0.3], "park_mavic_7":[0.5, 0.3], "soccerfield_mavic_3":[0.5, 0.3], \
+                  "soccerfield_mavic_4":[0.5, 0.3]},
         "BACF":None,
         "CSRDCF":{"cup_0.5HZ":[0.3, 1], "cup_0.9HZ":[0.3, 1], "cup_1.1HZ":[0.3, 1], \
                   "cup_1.5HZ":[0.3, 1], "cup_1.8HZ":[0.3, 1], "cup_2.1HZ":[0.3, 1], \

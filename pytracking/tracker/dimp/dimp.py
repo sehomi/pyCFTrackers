@@ -151,6 +151,14 @@ class DiMP(BaseTracker):
             self.pos = self.pos_iounet.clone()
 
         score_map = s[scale_ind, ...]
+        self.score = score_map.cpu().detach().numpy()
+
+        score_sz = torch.Tensor(list(scores_raw.shape[-2:]))
+        output_sz = score_sz - (self.kernel_size + 1) % 2
+        sfactor = (self.img_support_sz / output_sz) * sample_scales[scale_ind]
+        sfactor = sfactor.cpu().detach().numpy()
+        self.crop_size = self.score.shape*sfactor
+        self.crop_size = (int(self.crop_size[0]), int(self.crop_size[1]))
         max_score = torch.max(score_map).item()
 
         # Visualize and set debug info

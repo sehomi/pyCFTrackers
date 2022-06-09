@@ -41,13 +41,14 @@ if __name__ == '__main__':
         # tracker_kcf_gray=PyTracker(img_dir, tracker_type='KCF_GRAY',dataset_config=dataset_config)
         tracker_kcf_hog=PyTracker(img_dir,tracker_type='KCF_HOG',dataset_config=dataset_config)
         # tracker_bacf=PyTracker(img_dir,tracker_type='BACF',dataset_config=dataset_config)
-        tracker_ldes=PyTracker(img_dir,tracker_type='LDES',dataset_config=dataset_config)
-        tracker_strcf=PyTracker(img_dir,tracker_type='STRCF',dataset_config=dataset_config)
-        tracker_csrdcf=PyTracker(img_dir,tracker_type='CSRDCF',dataset_config=dataset_config)
+        # tracker_ldes=PyTracker(img_dir,tracker_type='LDES',dataset_config=dataset_config)
+        # tracker_strcf=PyTracker(img_dir,tracker_type='STRCF',dataset_config=dataset_config)
+        # tracker_csrdcf=PyTracker(img_dir,tracker_type='CSRDCF',dataset_config=dataset_config)
         # tracker_mosse=PyTracker(img_dir,tracker_type='MOSSE',dataset_config=dataset_config)
         # tracker_csk=PyTracker(img_dir,tracker_type='CSK',dataset_config=dataset_config)
         # tracker_kcf_cn=PyTracker(img_dir,tracker_type='KCF_CN',dataset_config=dataset_config)
-        tracker_eco=PyTracker(img_dir,tracker_type='ECO',dataset_config=dataset_config)
+        # tracker_eco=PyTracker(img_dir,tracker_type='ECO',dataset_config=dataset_config)
+        tracker_dimp50=PyTracker(img_dir,tracker_type='DIMP50',dataset_config=dataset_config)
         # tracker_eco_hc=PyTracker(img_dir,tracker_type='ECO-HC',dataset_config=dataset_config)
         # tracker_cn=PyTracker(img_dir,tracker_type='CN',dataset_config=dataset_config)
 
@@ -56,6 +57,12 @@ if __name__ == '__main__':
         # for kcf_gray_pred in kcf_gray_preds:
         #     viot_results[data_name]['kcf_gray_preds'].append(list(kcf_gray_pred.astype(np.int)))
         # print('kcf gray done!')
+
+        dimp50_preds=tracker_dimp50.tracking()
+        viot_results[data_name]['tracker_dimp50_preds'] = []
+        for dimp50_pred in dimp50_preds:
+            viot_results[data_name]['tracker_dimp50_preds'].append(list(dimp50_pred.astype(np.int)))
+        print('dimp50 done!')
 
         kcf_hog_preds=tracker_kcf_hog.tracking()
         viot_results[data_name]['kcf_hog_preds'] = []
@@ -69,23 +76,23 @@ if __name__ == '__main__':
         #     viot_results[data_name]['bacf_preds'].append(list(bacf_pred.astype(np.int)))
         # print('bacf done!')
         #
-        ldes_preds=tracker_ldes.tracking()
-        viot_results[data_name]['ldes_preds'] = []
-        for ldes_pred in ldes_preds:
-            viot_results[data_name]['ldes_preds'].append(list(ldes_pred.astype(np.int)))
-        print('ldes done!')
-
-        strcf_preds=tracker_strcf.tracking()
-        viot_results[data_name]['strcf_preds'] = []
-        for strcf_pred in strcf_preds:
-            viot_results[data_name]['strcf_preds'].append(list(strcf_pred.astype(np.int)))
-        print('strcf done!')
-
-        csrdcf_preds=tracker_csrdcf.tracking()
-        viot_results[data_name]['csrdcf_preds'] = []
-        for csrdcf_pred in csrdcf_preds:
-            viot_results[data_name]['csrdcf_preds'].append(list(csrdcf_pred.astype(np.int)))
-        print('csrdcf done!')
+        # ldes_preds=tracker_ldes.tracking()
+        # viot_results[data_name]['ldes_preds'] = []
+        # for ldes_pred in ldes_preds:
+        #     viot_results[data_name]['ldes_preds'].append(list(ldes_pred.astype(np.int)))
+        # print('ldes done!')
+        #
+        # strcf_preds=tracker_strcf.tracking()
+        # viot_results[data_name]['strcf_preds'] = []
+        # for strcf_pred in strcf_preds:
+        #     viot_results[data_name]['strcf_preds'].append(list(strcf_pred.astype(np.int)))
+        # print('strcf done!')
+        #
+        # csrdcf_preds=tracker_csrdcf.tracking()
+        # viot_results[data_name]['csrdcf_preds'] = []
+        # for csrdcf_pred in csrdcf_preds:
+        #     viot_results[data_name]['csrdcf_preds'].append(list(csrdcf_pred.astype(np.int)))
+        # print('csrdcf done!')
 
         # mosse_preds=tracker_mosse.tracking()
         # viot_results[data_name]['mosse'] = []
@@ -105,12 +112,12 @@ if __name__ == '__main__':
         #     viot_results[data_name]['kcf_cn'].append(list(kcf_cn_pred.astype(np.int)))
         # print('kcf_cn done!')
 
-
-        eco_preds = tracker_eco.tracking()
-        viot_results[data_name]['eco'] = []
-        for eco_pred in eco_preds:
-            viot_results[data_name]['eco'].append(list(eco_pred.astype(np.int)))
-        print('eco done!')
+        #
+        # eco_preds = tracker_eco.tracking()
+        # viot_results[data_name]['eco'] = []
+        # for eco_pred in eco_preds:
+        #     viot_results[data_name]['eco'].append(list(eco_pred.astype(np.int)))
+        # print('eco done!')
 
         # eco_hc_preds=tracker_eco_hc.tracking()
         # viot_results[data_name]['eco_hc']=[]
@@ -127,13 +134,14 @@ if __name__ == '__main__':
         # threshes,precisions_kcf_gray=get_thresh_precision_pair(gts,kcf_gray_preds)
         threshes,precisions_kcf_hog=get_thresh_precision_pair(gts,kcf_hog_preds)
         # _,precisions_bacf=get_thresh_precision_pair(gts,bacf_preds)
-        _,precisions_ldes=get_thresh_precision_pair(gts,ldes_preds)
-        _,precisions_strcf=get_thresh_precision_pair(gts,strcf_preds)
-        _,precisions_csrdcf=get_thresh_precision_pair(gts,csrdcf_preds)
+        # _,precisions_ldes=get_thresh_precision_pair(gts,ldes_preds)
+        # _,precisions_strcf=get_thresh_precision_pair(gts,strcf_preds)
+        # _,precisions_csrdcf=get_thresh_precision_pair(gts,csrdcf_preds)
         # _,precisions_mosse=get_thresh_precision_pair(gts,mosse_preds)
         # _,precisions_csk=get_thresh_precision_pair(gts,csk_preds)
         # _,precisions_kcf_cn=get_thresh_precision_pair(gts,kcf_cn_preds)
-        _,precisions_eco=get_thresh_precision_pair(gts,eco_preds)
+        # _,precisions_eco=get_thresh_precision_pair(gts,eco_preds)
+        _,precisions_dimp50=get_thresh_precision_pair(gts,dimp50_preds)
         # _,precisions_eco_hc=get_thresh_precision_pair(gts,eco_hc_preds)
         # _,precisions_cn=get_thresh_precision_pair(gts,cn_preds)
         idx20=[i for i, x in enumerate(threshes) if x==20][0]
@@ -141,13 +149,14 @@ if __name__ == '__main__':
         # plt.plot(threshes, precisions_kcf_gray, label='KCF_GRAY '+str(precisions_kcf_gray[idx20])[:5])
         plt.plot(threshes,precisions_kcf_hog,label='KCF_HOG '+str(precisions_kcf_hog[idx20])[:5])
         # plt.plot(threshes,precisions_bacf,label='BACF '+str(precisions_bacf[idx20])[:5])
-        plt.plot(threshes,precisions_ldes,label='LDES '+str(precisions_ldes[idx20])[:5])
-        plt.plot(threshes,precisions_strcf,label='STRCF '+str(precisions_strcf[idx20])[:5])
-        plt.plot(threshes,precisions_csrdcf,label='CSRDCF '+str(precisions_csrdcf[idx20])[:5])
+        # plt.plot(threshes,precisions_ldes,label='LDES '+str(precisions_ldes[idx20])[:5])
+        # plt.plot(threshes,precisions_strcf,label='STRCF '+str(precisions_strcf[idx20])[:5])
+        # plt.plot(threshes,precisions_csrdcf,label='CSRDCF '+str(precisions_csrdcf[idx20])[:5])
         # plt.plot(threshes,precisions_mosse,label='MOSSE '+str(precisions_mosse[idx20])[:5])
         # plt.plot(threshes,precisions_csk,label='CSK '+str(precisions_csk[idx20])[:5])
         # plt.plot(threshes,precisions_kcf_cn,label='KCF_CN '+str(precisions_kcf_cn[idx20])[:5])
-        plt.plot(threshes,precisions_eco,label='ECO '+str(precisions_eco[idx20])[:5])
+        # plt.plot(threshes,precisions_eco,label='ECO '+str(precisions_eco[idx20])[:5])
+        plt.plot(threshes,precisions_dimp50,label='DIMP50 '+str(precisions_dimp50[idx20])[:5])
         # plt.plot(threshes,precisions_eco_hc,label='ECO-HC '+str(precisions_eco_hc[idx20])[:5])
         # plt.plot(threshes,precisions_cn,label='CN '+str(precisions_cn[idx20])[:5])
         plt.title(data_name+' Precision')
@@ -162,23 +171,25 @@ if __name__ == '__main__':
         # threshes,successes_kcf_gray=get_thresh_success_pair(gts, kcf_gray_preds)
         threshes,successes_kcf_hog=get_thresh_success_pair(gts,kcf_hog_preds)
         # _,successes_bacf=get_thresh_success_pair(gts,bacf_preds)
-        _,successes_ldes=get_thresh_success_pair(gts,ldes_preds)
-        _,successes_strcf=get_thresh_success_pair(gts,strcf_preds)
-        _,successes_csrdcf=get_thresh_success_pair(gts,csrdcf_preds)
+        # _,successes_ldes=get_thresh_success_pair(gts,ldes_preds)
+        # _,successes_strcf=get_thresh_success_pair(gts,strcf_preds)
+        # _,successes_csrdcf=get_thresh_success_pair(gts,csrdcf_preds)
         # _,successes_mosse=get_thresh_success_pair(gts,mosse_preds)
         # _,successes_csk=get_thresh_success_pair(gts,csk_preds)
         # _,successes_kcf_cn=get_thresh_success_pair(gts,kcf_cn_preds)
-        _,successes_eco=get_thresh_success_pair(gts,eco_preds)
+        # _,successes_eco=get_thresh_success_pair(gts,eco_preds)
+        _,successes_dimp50=get_thresh_success_pair(gts,dimp50_preds)
         # _,successes_eco_hc=get_thresh_success_pair(gts,eco_hc_preds)
         # _,successes_cn=get_thresh_success_pair(gts,cn_preds)
         # plt.plot(threshes,successes_kcf_cn,label='KCF_CN '+str(calAUC(successes_kcf_cn))[:5])
-        plt.plot(threshes,successes_eco,label='ECO '+str(calAUC(successes_eco))[:5])
+        # plt.plot(threshes,successes_eco,label='ECO '+str(calAUC(successes_eco))[:5])
+        plt.plot(threshes,successes_dimp50,label='DIMP50 '+str(calAUC(successes_dimp50))[:5])
         # plt.plot(threshes,successes_kcf_gray, label='KCF_GRAY '+str(calAUC(successes_kcf_gray))[:5])
         plt.plot(threshes,successes_kcf_hog,label='KCF_HOG '+str(calAUC(successes_kcf_hog))[:5])
         # plt.plot(threshes,successes_bacf,label='BACF '+str(calAUC(successes_bacf))[:5])
-        plt.plot(threshes,successes_ldes,label='LDES '+str(calAUC(successes_ldes))[:5])
-        plt.plot(threshes,successes_strcf,label='STRCF '+str(calAUC(successes_strcf))[:5])
-        plt.plot(threshes,successes_csrdcf,label='CSRDCF '+str(calAUC(successes_csrdcf))[:5])
+        # plt.plot(threshes,successes_ldes,label='LDES '+str(calAUC(successes_ldes))[:5])
+        # plt.plot(threshes,successes_strcf,label='STRCF '+str(calAUC(successes_strcf))[:5])
+        # plt.plot(threshes,successes_csrdcf,label='CSRDCF '+str(calAUC(successes_csrdcf))[:5])
         # plt.plot(threshes,successes_mosse,label='MOSSE '+str(calAUC(successes_mosse))[:5])
         # plt.plot(threshes,successes_csk,label='CSK '+str(calAUC(successes_csk))[:5])
         # plt.plot(threshes,successes_eco_hc,label='ECO-HC '+str(calAUC(successes_eco_hc))[:5])

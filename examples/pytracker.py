@@ -1,6 +1,8 @@
 import cv2
 import numpy as np
 import importlib
+import os
+from collections import OrderedDict
 from lib.utils import get_img_list,get_states_data,get_ground_truthes,get_ground_truthes_viot,APCE,PSR
 from cftracker.mosse import MOSSE
 from cftracker.csk import CSK
@@ -35,7 +37,7 @@ class PyTracker:
         self.states=get_states_data(img_dir) ## VIOT
         self.fov=dataset_config.fov[dataname]
         self.ethTracker=False
-        
+
         if dataname in dataset_config.frames.keys():
             start_frame,end_frame=dataset_config.frames[dataname][0:2]
             self.init_gt=self.gts[start_frame-1]
@@ -162,43 +164,57 @@ class PyTracker:
         elif self.tracker_type=='MCCTH-Staple':
             self.tracker=MCCTHStaple(config=mccth_staple_config.MCCTHOTBConfig())
             self.ratio_thresh=0.1
-            
+
         elif self.tracker_type=='MCCTH':
             self.tracker=MCCTH(config=mccth_config.MCCTHConfig())
             self.ratio_thresh=0.1
-            
+
         elif self.tracker_type=='DIMP50':
             self.tracker=self.getETHTracker('dimp','dimp50')
             self.ethTracker=True
-            self.ratio_thresh=0.1
-            
+            try:
+                self.ratio_thresh=dataset_config.params['DIMP50'][dataname][0]
+            except:
+                self.ratio_thresh=0.5
+
+            try:
+                self.interp_factor=dataset_config.params['DIMP50'][dataname][1]
+            except:
+                self.interp_factor=0.3
+
         else:
             raise NotImplementedError
-            
-            
+
+
     def getETHTracker(self, name, params):
-    
-    	param_module = importlib.import_module('pytracking.parameter.{}.{}'.format(name, params))
+        param_module = importlib.import_module('pytracking.parameter.{}.{}'.format(name, params))
         params = param_module.parameters()
         params.tracker_name = name
         params.param_name = params
-        
-        tracker = self.create_tracker(params)
+
+        tracker_module_abspath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'tracker', name))
+        tracker_module = importlib.import_module('pytracking.tracker.{}'.format(name))
+        tracker_class = tracker_module.get_tracker_class()
+
+        tracker = tracker_class(params)
+
         if hasattr(tracker, 'initialize_features'):
             tracker.initialize_features()
-            
+
         return tracker
-            
+
     def initETHTracker(self, frame, bbox):
 
-        box = {'init_bbox': OrderedDict({1: bbox}), 'init_object_ids': [1, ], 'object_ids': [1, ],
+        x, y, w, h = bbox
+        init_state = [x, y, w, h]
+        box = {'init_bbox': init_state, 'init_object_ids': [1, ], 'object_ids': [1, ],
                     'sequence_object_ids': [1, ]}
         self.tracker.initialize(frame, box)
 
     def doTrack(self, current_frame, verbose, est_loc, do_learning, viot=False):
     	if self.ethTracker:
-    	    out = tracker.track(current_frame)
-    	    bbox = [int(s) for s in out['target_bbox'][1]]
+    	    out = self.tracker.track(current_frame)
+    	    bbox = [int(s) for s in out['target_bbox']]
     	else:
     	    if viot:
     	        bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc, \
@@ -206,10 +222,10 @@ class PyTracker:
     	    else:
     	    	bbox=self.tracker.update(current_frame,vis=verbose)
     	    	# bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc)
-    	    	
+
     	return bbox
-            
-                    
+
+
     def tracking(self,verbose=True,video_path=None):
         poses = []
         init_frame = cv2.imread(self.frame_list[0])
@@ -245,7 +261,7 @@ class PyTracker:
                 if stop:
                     bbox=last_bbox
                 else:
-                    bbox=self.doTrack(self, current_frame, verbose, est_loc, psr/psr0>self.ratio_thresh and not stop, viot=False)
+                    bbox=self.doTrack(current_frame, verbose, est_loc, psr/psr0>self.ratio_thresh and not stop, viot=False)
                     last_bbox=bbox
 
                 stop=bbox[2] > width or bbox[3] > height
