@@ -197,6 +197,15 @@ class ToMP(BaseTracker):
 
         score_map = s[scale_ind, ...]
 
+        self.score = score_map.cpu().detach().numpy()
+
+        score_sz = torch.Tensor(list(scores_raw.shape[-2:]))
+        output_sz = score_sz - (self.kernel_size + 1) % 2
+        sfactor = (self.img_support_sz / output_sz) * sample_scales[scale_ind]
+        sfactor = sfactor.cpu().detach().numpy()
+        self.crop_size = self.score.shape*sfactor
+        self.crop_size = (int(self.crop_size[0]), int(self.crop_size[1]))
+
         # Compute output bounding box
         new_state = torch.cat((self.pos[[1, 0]] - (self.target_sz[[1, 0]] - 1) / 2, self.target_sz[[1, 0]]))
 

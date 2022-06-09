@@ -182,6 +182,45 @@ class PyTracker:
             except:
                 self.interp_factor=0.3
 
+        elif self.tracker_type=='PRDIMP50':
+            self.tracker=self.getETHTracker('dimp','prdimp50')
+            self.ethTracker=True
+            try:
+                self.ratio_thresh=dataset_config.params['PRDIMP50'][dataname][0]
+            except:
+                self.ratio_thresh=0.5
+
+            try:
+                self.interp_factor=dataset_config.params['PRDIMP50'][dataname][1]
+            except:
+                self.interp_factor=0.3
+
+        elif self.tracker_type=='KYS':
+            self.tracker=self.getETHTracker('kys','default')
+            self.ethTracker=True
+            try:
+                self.ratio_thresh=dataset_config.params['KYS'][dataname][0]
+            except:
+                self.ratio_thresh=0.5
+
+            try:
+                self.interp_factor=dataset_config.params['KYS'][dataname][1]
+            except:
+                self.interp_factor=0.3
+
+        elif self.tracker_type=='TOMP':
+            self.tracker=self.getETHTracker('tomp','tomp101')
+            self.ethTracker=True
+            try:
+                self.ratio_thresh=dataset_config.params['TOMP'][dataname][0]
+            except:
+                self.ratio_thresh=0.5
+
+            try:
+                self.interp_factor=dataset_config.params['TOMP'][dataname][1]
+            except:
+                self.interp_factor=0.3
+
         else:
             raise NotImplementedError
 

@@ -204,6 +204,15 @@ class KYS(BaseTracker):
         elif self.params.get('reset_state_during_occlusion', False):
             self.prev_state_handler.reset_state()
 
+        self.score = scores_dimp[0].cpu().detach().numpy()
+        self.score = self.score[0]
+
+        sfactor = (self.img_support_sz / self.output_sz) * sample_scales[0]
+        sfactor = sfactor.cpu().detach().numpy()
+        
+        self.crop_size = self.score.shape*sfactor
+        self.crop_size = (int(self.crop_size[0]), int(self.crop_size[1]))
+
         if self.visdom is not None:
             self.visdom.register(scores_dimp[0], 'heatmap', 2, 'Dimp')
             self.visdom.register(self.debug_info, 'info_dict', 1, 'Status')

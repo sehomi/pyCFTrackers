@@ -48,7 +48,10 @@ if __name__ == '__main__':
         # tracker_csk=PyTracker(img_dir,tracker_type='CSK',dataset_config=dataset_config)
         # tracker_kcf_cn=PyTracker(img_dir,tracker_type='KCF_CN',dataset_config=dataset_config)
         # tracker_eco=PyTracker(img_dir,tracker_type='ECO',dataset_config=dataset_config)
-        tracker_dimp50=PyTracker(img_dir,tracker_type='DIMP50',dataset_config=dataset_config)
+        # tracker_prdimp50=PyTracker(img_dir,tracker_type='PRDIMP50',dataset_config=dataset_config)
+        # tracker_kys=PyTracker(img_dir,tracker_type='KYS',dataset_config=dataset_config)
+        tracker_tomp=PyTracker(img_dir,tracker_type='TOMP',dataset_config=dataset_config)
+        # tracker_dimp50=PyTracker(img_dir,tracker_type='DIMP50',dataset_config=dataset_config)
         # tracker_eco_hc=PyTracker(img_dir,tracker_type='ECO-HC',dataset_config=dataset_config)
         # tracker_cn=PyTracker(img_dir,tracker_type='CN',dataset_config=dataset_config)
 
@@ -58,11 +61,29 @@ if __name__ == '__main__':
         #     viot_results[data_name]['kcf_gray_preds'].append(list(kcf_gray_pred.astype(np.int)))
         # print('kcf gray done!')
 
-        dimp50_preds=tracker_dimp50.tracking()
-        viot_results[data_name]['tracker_dimp50_preds'] = []
-        for dimp50_pred in dimp50_preds:
-            viot_results[data_name]['tracker_dimp50_preds'].append(list(dimp50_pred.astype(np.int)))
-        print('dimp50 done!')
+        # dimp50_preds=tracker_dimp50.tracking()
+        # viot_results[data_name]['tracker_dimp50_preds'] = []
+        # for dimp50_pred in dimp50_preds:
+        #     viot_results[data_name]['tracker_dimp50_preds'].append(list(dimp50_pred.astype(np.int)))
+        # print('dimp50 done!')
+
+        # kys_preds=tracker_kys.tracking()
+        # viot_results[data_name]['tracker_kys_preds'] = []
+        # for kys_pred in kys_preds:
+        #     viot_results[data_name]['tracker_kys_preds'].append(list(kys_pred.astype(np.int)))
+        # print('kys done!')
+
+        tomp_preds=tracker_tomp.tracking()
+        viot_results[data_name]['tracker_tomp_preds'] = []
+        for tomp_pred in tomp_preds:
+            viot_results[data_name]['tracker_tomp_preds'].append(list(tomp_pred.astype(np.int)))
+        print('tomp done!')
+
+        # prdimp50_preds=tracker_prdimp50.tracking()
+        # viot_results[data_name]['tracker_prdimp50_preds'] = []
+        # for prdimp50_pred in prdimp50_preds:
+        #     viot_results[data_name]['tracker_prdimp50_preds'].append(list(prdimp50_pred.astype(np.int)))
+        # print('prdimp50 done!')
 
         kcf_hog_preds=tracker_kcf_hog.tracking()
         viot_results[data_name]['kcf_hog_preds'] = []
@@ -141,7 +162,10 @@ if __name__ == '__main__':
         # _,precisions_csk=get_thresh_precision_pair(gts,csk_preds)
         # _,precisions_kcf_cn=get_thresh_precision_pair(gts,kcf_cn_preds)
         # _,precisions_eco=get_thresh_precision_pair(gts,eco_preds)
-        _,precisions_dimp50=get_thresh_precision_pair(gts,dimp50_preds)
+        # _,precisions_dimp50=get_thresh_precision_pair(gts,dimp50_preds)
+        # _,precisions_prdimp50=get_thresh_precision_pair(gts,prdimp50_preds)
+        # _,precisions_kys=get_thresh_precision_pair(gts,kys_preds)
+        _,precisions_tomp=get_thresh_precision_pair(gts,tomp_preds)
         # _,precisions_eco_hc=get_thresh_precision_pair(gts,eco_hc_preds)
         # _,precisions_cn=get_thresh_precision_pair(gts,cn_preds)
         idx20=[i for i, x in enumerate(threshes) if x==20][0]
@@ -156,7 +180,10 @@ if __name__ == '__main__':
         # plt.plot(threshes,precisions_csk,label='CSK '+str(precisions_csk[idx20])[:5])
         # plt.plot(threshes,precisions_kcf_cn,label='KCF_CN '+str(precisions_kcf_cn[idx20])[:5])
         # plt.plot(threshes,precisions_eco,label='ECO '+str(precisions_eco[idx20])[:5])
-        plt.plot(threshes,precisions_dimp50,label='DIMP50 '+str(precisions_dimp50[idx20])[:5])
+        # plt.plot(threshes,precisions_dimp50,label='DIMP50 '+str(precisions_dimp50[idx20])[:5])
+        # plt.plot(threshes,precisions_prdimp50,label='PRDIMP50 '+str(precisions_prdimp50[idx20])[:5])
+        # plt.plot(threshes,precisions_kys,label='KYS '+str(precisions_kys[idx20])[:5])
+        plt.plot(threshes,precisions_tomp,label='TOMP '+str(precisions_tomp[idx20])[:5])
         # plt.plot(threshes,precisions_eco_hc,label='ECO-HC '+str(precisions_eco_hc[idx20])[:5])
         # plt.plot(threshes,precisions_cn,label='CN '+str(precisions_cn[idx20])[:5])
         plt.title(data_name+' Precision')
@@ -178,12 +205,18 @@ if __name__ == '__main__':
         # _,successes_csk=get_thresh_success_pair(gts,csk_preds)
         # _,successes_kcf_cn=get_thresh_success_pair(gts,kcf_cn_preds)
         # _,successes_eco=get_thresh_success_pair(gts,eco_preds)
-        _,successes_dimp50=get_thresh_success_pair(gts,dimp50_preds)
+        # _,successes_dimp50=get_thresh_success_pair(gts,dimp50_preds)
+        # _,successes_prdimp50=get_thresh_success_pair(gts,prdimp50_preds)
+        # _,successes_kys=get_thresh_success_pair(gts,kys_preds)
+        _,successes_tomp=get_thresh_success_pair(gts,tomp_preds)
         # _,successes_eco_hc=get_thresh_success_pair(gts,eco_hc_preds)
         # _,successes_cn=get_thresh_success_pair(gts,cn_preds)
         # plt.plot(threshes,successes_kcf_cn,label='KCF_CN '+str(calAUC(successes_kcf_cn))[:5])
         # plt.plot(threshes,successes_eco,label='ECO '+str(calAUC(successes_eco))[:5])
-        plt.plot(threshes,successes_dimp50,label='DIMP50 '+str(calAUC(successes_dimp50))[:5])
+        # plt.plot(threshes,successes_dimp50,label='DIMP50 '+str(calAUC(successes_dimp50))[:5])
+        # plt.plot(threshes,successes_prdimp50,label='PRDIMP50 '+str(calAUC(successes_prdimp50))[:5])
+        # plt.plot(threshes,successes_kys,label='KYS '+str(calAUC(successes_kys))[:5])
+        plt.plot(threshes,successes_tomp,label='TOMP '+str(calAUC(successes_tomp))[:5])
         # plt.plot(threshes,successes_kcf_gray, label='KCF_GRAY '+str(calAUC(successes_kcf_gray))[:5])
         plt.plot(threshes,successes_kcf_hog,label='KCF_HOG '+str(calAUC(successes_kcf_hog))[:5])
         # plt.plot(threshes,successes_bacf,label='BACF '+str(calAUC(successes_bacf))[:5])
