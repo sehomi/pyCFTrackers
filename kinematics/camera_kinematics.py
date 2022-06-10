@@ -30,7 +30,9 @@ class CameraKinematics:
         self._inertia_dir_before = np.array( [0,0,0] )
         self._inertia_dir_after = np.array( [0,0,0] )
         self._last_rect = (0,0,0,0)
-        self._interp_factor=factor
+        self._interp_factor = factor
+        self._diff_buff = []
+        self._last_target_states = [False]
 
         self._vis=vis
         if vis:
@@ -109,6 +111,108 @@ class CameraKinematics:
 
         return (int(X),int(Y))
 
+    def updateRectSphere(self, imu_meas, rect=None):
+
+        if rect is not None:
+            self._last_rect = rect
+
+        ## convert target from a rect in "image coordinates" to a vector
+        ## in "camera body coordinates"
+        body_dir = self.cam_to_body(rect)
+
+        ## convert target from a vector in "camera body coordinates" to a vector
+        ## in "inertial coordinates"
+        inertia_dir = self.body_to_inertia(body_dir, imu_meas)
+
+        ## represent inertia_dir in spherecal coordinates
+        inertia_dir_sp = self.toSpherecalCoords(inertia_dir)
+
+        if self._init:
+            diff=np.array([0.0, 0.0, 0.0])
+            if inertia_dir is not None:
+                ## find the difference between new observation (inertia_dir) and last
+                ## known direction (self._inertia_dir_before)
+                diff = np.array([0.0, self.angleDifference(inertia_dir_sp[1], self._inertia_dir_before[1]), \
+                                      self.angleDifference(inertia_dir_sp[2], self._inertia_dir_before[2])])
+
+
+            ## if target is just found, empty the observation buffer to prevent
+            ## oscilations around target
+            if inertia_dir is not None and all(~np.array(self._last_target_states)):
+                self._diff_buff = []
+
+            ## make the differences smooth overtime by a moving average. this adds a dynamic to target
+            ## direction vector.
+            if len(self._diff_buff) > 50:
+                del self._diff_buff[0]
+                self._diff_buff.append(diff)
+            else:
+                self._diff_buff.append(diff)
+
+            ## if target just disappeared, eliminate some of the last buffered observations,
+            ## because target's box is having misleading shakes before being lost
+            if inertia_dir is None and self._last_target_states[-1]:
+                for i in range( int(0.4*len(self._diff_buff)) ):
+                    del self._diff_buff[-1]
+
+            ## record last target states
+            if inertia_dir is None:
+                if len(self._last_target_states) < 3:
+                    self._last_target_states.append(False)
+                else:
+                    del self._last_target_states[0]
+                    self._last_target_states.append(False)
+            else:
+                if len(self._last_target_states) < 3:
+                    self._last_target_states.append(True)
+                else:
+                    del self._last_target_states[0]
+                    self._last_target_states.append(True)
+
+            self._diff = np.mean(self._diff_buff, 0)
+
+            ## calculate new estimate for target's direction vector
+            self._inertia_dir_after = self._inertia_dir_before + self._diff
+
+            ## save this new estimate as last known direction in the memory
+            self._inertia_dir_before = self._inertia_dir_after.copy()
+
+        else:
+
+            if inertia_dir is not None:
+                ## initialize with first observation
+                self._inertia_dir_before = inertia_dir_sp.copy()
+                self._inertia_dir_after = inertia_dir_sp.copy()
+                self._diff = np.array([0.0,0.0,0.0])
+
+                self._init = True
+            else:
+                return None
+
+        ## convert back to cartesian coordinates
+        inertia_dir_after_ca = self.toCartesianCoords(self._inertia_dir_after)
+
+        if self._vis:
+            ## expressing camera frame by for vectors of its image corners in inertial
+            ## frame
+            corners = self.get_camera_frame_vecs(imu_meas,self._w,self._h)
+            plot_kinematics(imu_meas, inertia_dir_after_ca, self._ax_3d, corners)
+
+        ## convert new estimate of target direction vector to body coordinates
+        body_dir_est = self.inertia_to_body( inertia_dir_after_ca, imu_meas)
+
+        ## convert body to cam coordinates
+        cam_dir_est = self.body_to_cam(body_dir_est)
+
+        ## reproject to image plane
+        center_est = self.from_direction_vector(cam_dir_est, self._cx, self._cy, self._f)
+
+        ## estimated rectangle
+        rect_est = (int(center_est[0]-self._last_rect[2]/2), \
+                    int(center_est[1]-self._last_rect[3]/2),
+                    self._last_rect[2], self._last_rect[3])
+
+        return rect_est
 
     def updateRect(self, imu_meas, rect=None):
 
@@ -139,13 +243,12 @@ class CameraKinematics:
 
             ## calculate new estimate for target's direction vector
             self._inertia_dir_after = self._inertia_dir_before + self._diff
-            print("diff ", self._diff)
 
             ## ensure direction vector always has a length of 1
             self._inertia_dir_after = self._inertia_dir_after/np.linalg.norm(self._inertia_dir_after)
 
             ## save this new estimate as last known direction in the memory
-            self._inertia_dir_before = self._inertia_dir_after
+            self._inertia_dir_before = self._inertia_dir_after.copy()
 
         else:
 
@@ -220,3 +323,54 @@ class CameraKinematics:
         DCM[2,2] = np.cos(theta)*np.cos(phi)
 
         return DCM
+
+    def toSpherecalCoords(self, vec):
+
+        if vec is None:
+            return None
+
+        x = vec[0]
+        y = vec[1]
+        z = vec[2]
+
+        r = np.sqrt(x**2 + y**2 + z**2)
+        th = np.arccos( z / r )
+
+        if x>0:
+            phi = np.arctan(y/x)
+        elif x<0 and y>=0:
+            phi = np.arctan(y/x) + np.pi
+        elif x<0 and y<0:
+            phi = np.arctan(y/x) - np.pi
+        elif x==0 and y>0:
+            phi = np.pi
+        elif x==0 and y<0:
+            phi = -np.pi
+
+        return np.array([r,th, phi])
+
+    def toCartesianCoords(self, vec):
+
+        if vec is None:
+            return None
+
+        r = vec[0]
+        th = vec[1]
+        phi = vec[2]
+
+        x = r*np.cos(phi)*np.sin(th)
+        y = r*np.sin(phi)*np.sin(th)
+        z = r*np.cos(th)
+
+        return np.array([x, y, z])
+
+    def angleDifference(self, ang1, ang2):
+        PI  = np.pi
+
+        a = ang1 - ang2
+        if a > PI:
+            a -= 2*PI
+        if a < -PI:
+            a += 2*PI
+
+        return a
