@@ -225,6 +225,7 @@ class PyTracker:
             raise NotImplementedError
 
         self.viot = self.interp_factor!=0
+        # self.viot = False
 
 
     def getETHTracker(self, name, params):
