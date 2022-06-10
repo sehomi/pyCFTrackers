@@ -290,7 +290,7 @@ class PyTracker:
         ## equal to 66 deg.
         kin = CameraKinematics(self.interp_factor, init_frame.shape[1]/2, init_frame.shape[0]/2,\
                                 w=init_frame.shape[1], h=init_frame.shape[0],\
-                                hfov=self.fov, vis=True)
+                                hfov=self.fov, vis=False)
 
         psr0=-1
         psr=-1

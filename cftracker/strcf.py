@@ -214,6 +214,7 @@ class STRCF(BaseCF):
 
 
             dx, dy = (disp_col * self.cell_size*self.sc*self.scale_factors[sind]), (disp_row * self.cell_size*self.sc*self.scale_factors[sind])
+            self.trans=[dx,dy]
             scale_change_factor=self.scale_factors[sind]
             old_pos = self._center
             self._center = (sample_pos[0] +dx, sample_pos[1] + dy)

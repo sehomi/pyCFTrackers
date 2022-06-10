@@ -499,6 +499,8 @@ class LDES(BaseCF):
         dy=pty-(response.shape[0])//2
         dx=ptx-(response.shape[1])//2
 
+        self.trans=[dx,dy]
+
         if self.is_rotation:
             sn,cs=np.sin(self.rot),np.cos(self.rot)
             pp=np.array([[self.sc[1]*cs,-self.sc[0]*sn],

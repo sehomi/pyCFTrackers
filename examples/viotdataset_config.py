@@ -62,10 +62,10 @@ class VIOTDatasetConfig:
         "ECO-HC":None,
         "ECO":{"cup_0.5HZ":[0.5, 1], "cup_0.9HZ":[0.5, 1], "cup_1.1HZ":[0.5, 1], \
                "cup_1.5HZ":[0.5, 1], "cup_1.8HZ":[0.5, 1], "cup_2.1HZ":[0.5, 1], \
-               "cup_3.2HZ":[0.5, 1], "park_mavic_1":[0.5, 0.3], "park_mavic_2":[0.5, 0.3], \
-               "park_mavic_3":[0.5, 0.3], "park_mavic_4":[0.5, 0.3], "park_mavic_5":[0.5, 0.3], \
-               "park_mavic_6":[0.5, 0.3], "park_mavic_7":[0.5, 0.3], "soccerfield_mavic_3":[0.5, 0.3], \
-               "soccerfield_mavic_4":[0.5, 0.3]},
+               "cup_3.2HZ":[0.5, 1], "park_mavic_1":[0.5, -50], "park_mavic_2":[0.5, 0], \
+               "park_mavic_3":[0.5, 0], "park_mavic_4":[0.5, 0], "park_mavic_5":[0.5, -50], \
+               "park_mavic_6":[0.5, 0], "park_mavic_7":[0.5, 0], "soccerfield_mavic_3":[0.5, 0], \
+               "soccerfield_mavic_4":[0.5, 0]},
         "DIMP50":{"cup_0.5HZ":[0.3, 1], "cup_0.9HZ":[0.3, 1], "cup_1.1HZ":[0.3, 1], \
                   "cup_1.5HZ":[0.3, 1], "cup_1.8HZ":[0.3, 1], "cup_2.1HZ":[0.3, 1], \
                   "cup_3.2HZ":[0.3, 1], "park_mavic_1":[0.3, -50], "park_mavic_2":[0.3, 0], \
@@ -93,27 +93,27 @@ class VIOTDatasetConfig:
         "BACF":None,
         "CSRDCF":{"cup_0.5HZ":[0.3, 1], "cup_0.9HZ":[0.3, 1], "cup_1.1HZ":[0.3, 1], \
                   "cup_1.5HZ":[0.3, 1], "cup_1.8HZ":[0.3, 1], "cup_2.1HZ":[0.3, 1], \
-                  "cup_3.2HZ":[0.3, 1], "park_mavic_1":[0.3, 0.3], "park_mavic_2":[0.3, 0.3], \
-                  "park_mavic_3":[0.3, 0.3], "park_mavic_4":[0.3, 0.3], "park_mavic_5":[0.3, 0.3], \
-                  "park_mavic_6":[0.3, 0.3], "park_mavic_7":[0.3, 0.3], "soccerfield_mavic_3":[0.3, 0.3], \
-                  "soccerfield_mavic_4":[0.3, 0.3]},
+                  "cup_3.2HZ":[0.3, 1], "park_mavic_1":[0.3, -50], "park_mavic_2":[0.3, -50], \
+                  "park_mavic_3":[0.3, -50], "park_mavic_4":[0.3, -50], "park_mavic_5":[0.3, -50], \
+                  "park_mavic_6":[0.3, -50], "park_mavic_7":[0.3, -50], "soccerfield_mavic_3":[0.3, -50], \
+                  "soccerfield_mavic_4":[0.3, -50]},
         "CSRDCF-LP":None,
         "SAMF":None,
         "LDES":{"cup_0.5HZ":[0.2, 1], "cup_0.9HZ":[0.2, 1], "cup_1.1HZ":[0.2, 1], \
                 "cup_1.5HZ":[0.2, 1], "cup_1.8HZ":[0.2, 1], "cup_2.1HZ":[0.2, 1], \
-                "cup_3.2HZ":[0.2, 1], "park_mavic_1":[0.2, 0.3], "park_mavic_2":[0.2, 0.3], \
-                "park_mavic_3":[0.2, 0.3], "park_mavic_4":[0.2, 0.3], "park_mavic_5":[0.2, 0.3], \
-                "park_mavic_6":[0.2, 0.3], "park_mavic_7":[0.2, 0.3], "soccerfield_mavic_3":[0.2, 0.3], \
-                "soccerfield_mavic_4":[0.2, 0.3]},
+                "cup_3.2HZ":[0.2, 1], "park_mavic_1":[0.2, -50], "park_mavic_2":[0.2, -50], \
+                "park_mavic_3":[0.2, -50], "park_mavic_4":[0.2, -50], "park_mavic_5":[0.2, -50], \
+                "park_mavic_6":[0.2, -50], "park_mavic_7":[0.2, -50], "soccerfield_mavic_3":[0.2, -50], \
+                "soccerfield_mavic_4":[0.2, -50]},
         "DSST-LP":None,
         "MKCFup":None,
         "MKCFup-LP":None,
         "STRCF":{"cup_0.5HZ":[0.2, 1], "cup_0.9HZ":[0.2, 1], "cup_1.1HZ":[0.2, 1], \
                  "cup_1.5HZ":[0.2, 1], "cup_1.8HZ":[0.2, 1], "cup_2.1HZ":[0.2, 1], \
-                 "cup_3.2HZ":[0.2, 1], "park_mavic_1":[0.2, 0.3], "park_mavic_2":[0.2, 0.3], \
-                 "park_mavic_3":[0.2, 0.3], "park_mavic_4":[0.2, 0.3], "park_mavic_5":[0.2, 0.3], \
-                 "park_mavic_6":[0.2, 0.3], "park_mavic_7":[0.2, 0.3], "soccerfield_mavic_3":[0.2, 0.3], \
-                 "soccerfield_mavic_4":[0.2, 0.3]},
+                 "cup_3.2HZ":[0.2, 1], "park_mavic_1":[0.2,-50], "park_mavic_2":[0.2, -50], \
+                 "park_mavic_3":[0.2, -50], "park_mavic_4":[0.2, -50], "park_mavic_5":[0.2, -50], \
+                 "park_mavic_6":[0.2, -50], "park_mavic_7":[0.2, -50], "soccerfield_mavic_3":[0.2, -50], \
+                 "soccerfield_mavic_4":[0.2, -50]},
         "MCCTH-Staple":None,
         "MCCTH":None
     }
