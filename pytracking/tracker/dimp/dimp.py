@@ -161,7 +161,7 @@ class DiMP(BaseTracker):
         self.crop_size = self.score.shape*sfactor
         self.crop_size = (int(self.crop_size[0]), int(self.crop_size[1]))
         self.trans = translation_vec.cpu().detach().numpy()
-        
+
         max_score = torch.max(score_map).item()
 
         # Visualize and set debug info

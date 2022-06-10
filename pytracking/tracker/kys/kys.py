@@ -111,7 +111,7 @@ class KYS(BaseTracker):
         out = {'time': time.time() - tic}
         return out
 
-    def track(self, image, info: dict = None) -> dict:
+    def track(self, image, FI: list = None, do_learning=True, info: dict = None) -> dict:
         self.debug_info = {}
 
         self.frame_num += 1
@@ -123,7 +123,7 @@ class KYS(BaseTracker):
 
         # ------- LOCALIZATION ------- #
         # Extract backbone features
-        backbone_feat, sample_coords, im_patches = self.extract_backbone_features(im, self.get_centered_sample_pos(),
+        backbone_feat, sample_coords, im_patches = self.extract_backbone_features(im, self.get_centered_sample_pos(FI=FI),
                                                                                   self.target_scale * self.params.scale_factors,
                                                                                   self.img_sample_sz)
         # Extract classification features
@@ -168,23 +168,25 @@ class KYS(BaseTracker):
                 self.update_state(new_pos, sample_scales[scale_ind])
 
         # ------- UPDATE ------- #
-        update_flag = flag not in ['not_found', 'uncertain']
-        hard_negative = (flag == 'hard_negative')
-        learning_rate = self.params.get('hard_negative_learning_rate', None) if hard_negative else None
+        if do_learning:
 
-        if dimp_score_at_loc < self.params.get('min_dimp_score_update', -1.0):
-            update_flag = False
+            update_flag = flag not in ['not_found', 'uncertain']
+            hard_negative = (flag == 'hard_negative')
+            learning_rate = self.params.get('hard_negative_learning_rate', None) if hard_negative else None
 
-        if update_flag and self.params.get('update_classifier', False):
-            # Get train sample
-            train_x = test_x[scale_ind:scale_ind+1, ...]
+            if dimp_score_at_loc < self.params.get('min_dimp_score_update', -1.0):
+                update_flag = False
 
-            # Create target_box and label for spatial sample
-            target_box = self.get_iounet_box(self.pos, self.target_sz, sample_pos[scale_ind, :],
-                                             sample_scales[scale_ind])
+            if update_flag and self.params.get('update_classifier', False):
+                # Get train sample
+                train_x = test_x[scale_ind:scale_ind+1, ...]
 
-            # Update the classifier model
-            self.update_classifier(train_x, target_box, learning_rate, s[scale_ind, ...])
+                # Create target_box and label for spatial sample
+                target_box = self.get_iounet_box(self.pos, self.target_sz, sample_pos[scale_ind, :],
+                                                 sample_scales[scale_ind])
+
+                # Update the classifier model
+                self.update_classifier(train_x, target_box, learning_rate, s[scale_ind, ...])
 
         # Set the pos of the tracker to iounet pos
         if self.params.get('use_iou_net', True) and flag != 'not_found' and hasattr(self, 'pos_iounet'):
@@ -209,9 +211,10 @@ class KYS(BaseTracker):
 
         sfactor = (self.img_support_sz / self.output_sz) * sample_scales[0]
         sfactor = sfactor.cpu().detach().numpy()
-        
+
         self.crop_size = self.score.shape*sfactor
         self.crop_size = (int(self.crop_size[0]), int(self.crop_size[1]))
+        self.trans = translation_vec.cpu().detach().numpy()
 
         if self.visdom is not None:
             self.visdom.register(scores_dimp[0], 'heatmap', 2, 'Dimp')
@@ -228,10 +231,17 @@ class KYS(BaseTracker):
         sample_scales = ((sample_coord[:,2:] - sample_coord[:,:2]) / self.img_sample_sz).prod(dim=1).sqrt()
         return sample_pos, sample_scales
 
-    def get_centered_sample_pos(self):
+    def get_centered_sample_pos(self, FI=None):
         """Get the center position for the new sample. Make sure the target is correctly centered."""
-        return self.pos + ((self.feature_sz + self.kernel_size) % 2) * self.target_scale * \
+
+        if FI is None:
+            pos = self.pos
+        else:
+            pos = torch.Tensor([ FI[1]+FI[3]/2, FI[0]+FI[2]/2])
+
+        return pos + ((self.feature_sz + self.kernel_size) % 2) * self.target_scale * \
                self.img_support_sz / (2*self.feature_sz)
+
 
     def extract_backbone_features(self, im: torch.Tensor, pos: torch.Tensor, scales, sz: torch.Tensor):
         im_patches, patch_coords = sample_patch_multiscale(im, pos, scales, sz,

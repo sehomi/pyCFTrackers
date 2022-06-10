@@ -143,7 +143,7 @@ class CameraKinematics:
 
             ## make the differences smooth overtime by a moving average. this adds a dynamic to target
             ## direction vector.
-            if len(self._diff_buff) > 50:
+            if len(self._diff_buff) > -self._interp_factor:
                 del self._diff_buff[0]
                 self._diff_buff.append(diff)
             else:

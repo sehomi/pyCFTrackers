@@ -139,7 +139,7 @@ class ToMP(BaseTracker):
 
         return reg_targets_per_im
 
-    def track(self, image, info: dict = None) -> dict:
+    def track(self, image, FI: list = None, do_learning=True, info: dict = None) -> dict:
         self.debug_info = {}
 
         self.frame_num += 1
@@ -151,7 +151,7 @@ class ToMP(BaseTracker):
         # ------- LOCALIZATION ------- #
 
         # Extract backbone features
-        backbone_feat, sample_coords, im_patches = self.extract_backbone_features(im, self.get_centered_sample_pos(),
+        backbone_feat, sample_coords, im_patches = self.extract_backbone_features(im, self.get_centered_sample_pos(FI=FI),
                                                                       self.target_scale * self.params.scale_factors,
                                                                       self.img_sample_sz)
         # Extract classification features
@@ -178,22 +178,23 @@ class ToMP(BaseTracker):
                 self.search_area_rescaling()
 
         # ------- UPDATE ------- #
+        if do_learning:
 
-        update_flag = flag not in ['not_found', 'uncertain']
-        hard_negative = (flag == 'hard_negative')
-        learning_rate = self.params.get('hard_negative_learning_rate', None) if hard_negative else None
+            update_flag = flag not in ['not_found', 'uncertain']
+            hard_negative = (flag == 'hard_negative')
+            learning_rate = self.params.get('hard_negative_learning_rate', None) if hard_negative else None
 
-        if update_flag and self.params.get('update_classifier', False) and scores_raw.max() > self.params.get('conf_ths', 0.0):
-            # Get train sample
-            train_x = test_x[scale_ind:scale_ind+1, ...]
+            if update_flag and self.params.get('update_classifier', False) and scores_raw.max() > self.params.get('conf_ths', 0.0):
+                # Get train sample
+                train_x = test_x[scale_ind:scale_ind+1, ...]
 
-            # Create target_box and label for spatial sample
-            target_box = self.get_iounet_box(self.pos, self.target_sz, sample_pos[scale_ind,:], sample_scales[scale_ind])
-            train_y = self.get_label_function(self.pos, sample_pos[scale_ind, :], sample_scales[scale_ind]).to(
-                self.params.device)
+                # Create target_box and label for spatial sample
+                target_box = self.get_iounet_box(self.pos, self.target_sz, sample_pos[scale_ind,:], sample_scales[scale_ind])
+                train_y = self.get_label_function(self.pos, sample_pos[scale_ind, :], sample_scales[scale_ind]).to(
+                    self.params.device)
 
-            # Update the classifier model
-            self.update_memory(TensorList([train_x]), train_y, target_box, learning_rate)
+                # Update the classifier model
+                self.update_memory(TensorList([train_x]), train_y, target_box, learning_rate)
 
         score_map = s[scale_ind, ...]
 
@@ -205,6 +206,7 @@ class ToMP(BaseTracker):
         sfactor = sfactor.cpu().detach().numpy()
         self.crop_size = self.score.shape*sfactor
         self.crop_size = (int(self.crop_size[0]), int(self.crop_size[1]))
+        self.trans = translation_vec.cpu().detach().numpy()
 
         # Compute output bounding box
         new_state = torch.cat((self.pos[[1, 0]] - (self.target_sz[[1, 0]] - 1) / 2, self.target_sz[[1, 0]]))
@@ -283,9 +285,15 @@ class ToMP(BaseTracker):
         sample_scales = ((sample_coord[:,2:] - sample_coord[:,:2]) / self.img_sample_sz).prod(dim=1).sqrt()
         return sample_pos, sample_scales
 
-    def get_centered_sample_pos(self):
+    def get_centered_sample_pos(self, FI=None):
         """Get the center position for the new sample. Make sure the target is correctly centered."""
-        return self.pos + ((self.feature_sz + self.kernel_size) % 2) * self.target_scale * \
+
+        if FI is None:
+            pos = self.pos
+        else:
+            pos = torch.Tensor([ FI[1]+FI[3]/2, FI[0]+FI[2]/2])
+
+        return pos + ((self.feature_sz + self.kernel_size) % 2) * self.target_scale * \
                self.img_support_sz / (2*self.feature_sz)
 
     def classify_target(self, sample_x: TensorList):

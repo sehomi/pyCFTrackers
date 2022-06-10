@@ -224,7 +224,7 @@ class PyTracker:
         else:
             raise NotImplementedError
 
-        self.viot=True
+        self.viot = self.interp_factor!=0
 
 
     def getETHTracker(self, name, params):
@@ -323,16 +323,16 @@ class PyTracker:
 
                 ## estimating target location using kinematc model
                 if psr/psr0 > self.ratio_thresh:
-                    if self.interp_factor==0:
+                    if self.interp_factor<0:
                         est_loc = kin.updateRectSphere(self.states[idx,:], bbox)
                     else:
                         est_loc = kin.updateRect(self.states[idx,:], bbox)
                 else:
-                    if self.interp_factor==0:
+                    if self.interp_factor<0:
                         est_loc = kin.updateRectSphere(self.states[idx,:], None)
                     else:
                         est_loc = kin.updateRect(self.states[idx,:], None)
-                        
+
                 # print("psr ratio: ",psr/psr0, " learning: ", psr/psr0 > self.ratio_thresh, " est: ", est_loc)
 
                 x1,y1,w,h=bbox
