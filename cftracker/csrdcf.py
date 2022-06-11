@@ -210,6 +210,7 @@ class CSRDCF(BaseCF):
         dy=self.current_scale_factor*self.cell_size*(1/self.rescale_ratio)*row
         # self._center=(self._center[0]+dx,self._center[1]+dy)
         self._center=(search_zone_center[0]+dx,search_zone_center[1]+dy) ## VIOT
+        self.trans=[dx,dy]
 
         ## do not update template when target is lost
         if not do_learning:

@@ -34,6 +34,7 @@ class ECO(BaseCF):
         # if vis is True:
         self.score=self.tracker.score
         self.crop_size = tuple(self.tracker.crop_size.astype(np.int64))
+        self.trans = [0,0]
         x1, y1, w, h = bbox[0], bbox[1], bbox[2] - bbox[0], bbox[3] - bbox[1]
         pos = [x1, y1, w, h]
         return pos

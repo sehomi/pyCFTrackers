@@ -1,5 +1,8 @@
 import cv2
 import numpy as np
+import importlib
+import os
+from collections import OrderedDict
 from lib.utils import get_img_list,get_states_data,get_ground_truthes,get_ground_truthes_viot,APCE,PSR
 from cftracker.mosse import MOSSE
 from cftracker.csk import CSK
@@ -33,6 +36,7 @@ class PyTracker:
         self.gts=get_ground_truthes_viot(img_dir) ## VIOT
         self.states=get_states_data(img_dir) ## VIOT
         self.fov=dataset_config.fov[dataname]
+        self.ethTracker=False
 
         if dataname in dataset_config.frames.keys():
             start_frame,end_frame=dataset_config.frames[dataname][0:2]
@@ -93,7 +97,16 @@ class PyTracker:
             self.ratio_thresh=0.5
         elif self.tracker_type=='ECO':
             self.tracker=ECO(config=otb_deep_config.OTBDeepConfig())
-            self.ratio_thresh=0.5
+            try:
+                self.ratio_thresh=dataset_config.params['ECO'][dataname][0]
+            except:
+                self.ratio_thresh=0.5
+
+            try:
+                self.interp_factor=dataset_config.params['ECO'][dataname][1]
+            except:
+                self.interp_factor=0.3
+
         elif self.tracker_type=='BACF':
             self.tracker=BACF()
             self.ratio_thresh=0.2
@@ -151,11 +164,113 @@ class PyTracker:
         elif self.tracker_type=='MCCTH-Staple':
             self.tracker=MCCTHStaple(config=mccth_staple_config.MCCTHOTBConfig())
             self.ratio_thresh=0.1
+
         elif self.tracker_type=='MCCTH':
             self.tracker=MCCTH(config=mccth_config.MCCTHConfig())
             self.ratio_thresh=0.1
+
+        elif self.tracker_type=='DIMP50':
+            self.tracker=self.getETHTracker('dimp','dimp50')
+            self.ethTracker=True
+            try:
+                self.ratio_thresh=dataset_config.params['DIMP50'][dataname][0]
+            except:
+                self.ratio_thresh=0.5
+
+            try:
+                self.interp_factor=dataset_config.params['DIMP50'][dataname][1]
+            except:
+                self.interp_factor=0.3
+
+        elif self.tracker_type=='PRDIMP50':
+            self.tracker=self.getETHTracker('dimp','prdimp50')
+            self.ethTracker=True
+            try:
+                self.ratio_thresh=dataset_config.params['PRDIMP50'][dataname][0]
+            except:
+                self.ratio_thresh=0.5
+
+            try:
+                self.interp_factor=dataset_config.params['PRDIMP50'][dataname][1]
+            except:
+                self.interp_factor=0.3
+
+        elif self.tracker_type=='KYS':
+            self.tracker=self.getETHTracker('kys','default')
+            self.ethTracker=True
+            try:
+                self.ratio_thresh=dataset_config.params['KYS'][dataname][0]
+            except:
+                self.ratio_thresh=0.5
+
+            try:
+                self.interp_factor=dataset_config.params['KYS'][dataname][1]
+            except:
+                self.interp_factor=0.3
+
+        elif self.tracker_type=='TOMP':
+            self.tracker=self.getETHTracker('tomp','tomp101')
+            self.ethTracker=True
+            try:
+                self.ratio_thresh=dataset_config.params['TOMP'][dataname][0]
+            except:
+                self.ratio_thresh=0.5
+
+            try:
+                self.interp_factor=dataset_config.params['TOMP'][dataname][1]
+            except:
+                self.interp_factor=0.3
+
         else:
             raise NotImplementedError
+
+        self.viot = self.interp_factor!=0
+        # self.viot = False
+
+
+    def getETHTracker(self, name, params):
+        param_module = importlib.import_module('pytracking.parameter.{}.{}'.format(name, params))
+        params = param_module.parameters()
+        params.tracker_name = name
+        params.param_name = params
+
+        tracker_module_abspath = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'tracker', name))
+        tracker_module = importlib.import_module('pytracking.tracker.{}'.format(name))
+        tracker_class = tracker_module.get_tracker_class()
+
+        tracker = tracker_class(params)
+
+        if hasattr(tracker, 'initialize_features'):
+            tracker.initialize_features()
+
+        return tracker
+
+    def initETHTracker(self, frame, bbox):
+
+        x, y, w, h = bbox
+        init_state = [x, y, w, h]
+        box = {'init_bbox': init_state, 'init_object_ids': [1, ], 'object_ids': [1, ],
+                    'sequence_object_ids': [1, ]}
+        self.tracker.initialize(frame, box)
+
+    def doTrack(self, current_frame, verbose, est_loc, do_learning, viot=False):
+    	if self.ethTracker:
+            if viot:
+                out = self.tracker.track(current_frame, est_loc, do_learning=do_learning)
+            else:
+        	    out = self.tracker.track(current_frame)
+
+            bbox = [int(s) for s in out['target_bbox']]
+    	else:
+    	    if viot:
+    	        bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc, \
+    	                                 do_learning=do_learning) ## VIOT
+    	    else:
+    	    	bbox=self.tracker.update(current_frame,vis=verbose)
+    	    	# bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc)
+
+    	return bbox
+
 
     def tracking(self,verbose=True,video_path=None):
         poses = []
@@ -164,7 +279,10 @@ class PyTracker:
         init_gt = np.array(self.init_gt)
         x1, y1, w, h =init_gt
         init_gt=tuple(init_gt)
-        self.tracker.init(init_frame,init_gt)
+        if self.ethTracker:
+            self.initETHTracker(init_frame, init_gt)
+        else:
+            self.tracker.init(init_frame,init_gt)
         writer=None
         if verbose is True and video_path is not None:
             writer = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 30, (init_frame.shape[1], init_frame.shape[0]))
@@ -189,26 +307,33 @@ class PyTracker:
                 if stop:
                     bbox=last_bbox
                 else:
-                    bbox=self.tracker.update(current_frame,vis=verbose)
-                    # bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc)
-                    # bbox=self.tracker.update(current_frame,vis=verbose,FI=est_loc, \
-                    #                         do_learning=psr/psr0>self.ratio_thresh and not stop) ## VIOT
+                    bbox=self.doTrack(current_frame, verbose, est_loc, psr/psr0>self.ratio_thresh and not stop, viot=self.viot)
                     last_bbox=bbox
 
                 stop=bbox[2] > width or bbox[3] > height
 
                 ## evaluating tracked target
                 apce = APCE(self.tracker.score)
-                psr = PSR(self.tracker.score)
+                if self.ethTracker:
+                    psr = apce
+                else:
+                    psr = PSR(self.tracker.score)
                 F_max = np.max(self.tracker.score)
 
                 if psr0 is -1: psr0=psr
 
                 ## estimating target location using kinematc model
                 if psr/psr0 > self.ratio_thresh:
-                    est_loc = kin.updateRect(self.states[idx,:], bbox)
+                    if self.interp_factor<0:
+                        est_loc = kin.updateRectSphere(self.states[idx,:], bbox)
+                    else:
+                        est_loc = kin.updateRect(self.states[idx,:], bbox)
                 else:
-                    est_loc = kin.updateRect(self.states[idx,:], None)
+                    if self.interp_factor<0:
+                        est_loc = kin.updateRectSphere(self.states[idx,:], None)
+                    else:
+                        est_loc = kin.updateRect(self.states[idx,:], None)
+
                 # print("psr ratio: ",psr/psr0, " learning: ", psr/psr0 > self.ratio_thresh, " est: ", est_loc)
 
                 x1,y1,w,h=bbox
@@ -226,7 +351,7 @@ class PyTracker:
                     score = (score * 255).astype(np.uint8)
                     # score = 255 - score
                     score = cv2.applyColorMap(score, cv2.COLORMAP_JET)
-                    center = (int(x1+w/2),int(y1+h/2))
+                    center = (int(x1+w/2-self.tracker.trans[1]),int(y1+h/2-self.tracker.trans[0]))
                     x0,y0=center
                     x0=np.clip(x0,0,width-1)
                     y0=np.clip(y0,0,height-1)
@@ -249,7 +374,11 @@ class PyTracker:
                     crop_img = current_frame[ymin:ymax, xmin:xmax]
                     score_map = cv2.addWeighted(crop_img, 0.6, score, 0.4, 0)
                     current_frame[ymin:ymax, xmin:xmax] = score_map
-                    show_frame=cv2.rectangle(current_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (255, 0, 0),1)
+                    show_frame=cv2.rectangle(current_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (255, 0, 0),2)
+
+                    if self.viot and not psr/psr0>self.ratio_thresh:
+                        show_frame = cv2.line(show_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (0, 0, 255), 2)
+                        show_frame = cv2.line(show_frame, (int(x1+w), int(y1)), (int(x1), int(y1 + h)), (0, 0, 255), 2)
 
                     # cv2.putText(show_frame, 'APCE:' + str(apce)[:5], (0, 250), cv2.FONT_HERSHEY_COMPLEX, 2,
                     #             (0, 0, 255), 5)

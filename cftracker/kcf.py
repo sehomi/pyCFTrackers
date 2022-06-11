@@ -121,6 +121,7 @@ class KCF(BaseCF):
         x_c+= dx
         y_c+= dy
         self._center = (np.floor(x_c), np.floor(y_c))
+        self.trans = [dx,dy]
 
         ## do not update template when target is lost
         if not do_learning:
