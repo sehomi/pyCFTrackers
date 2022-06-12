@@ -2,9 +2,11 @@
 
 import time
 import numpy as np
+import cv2 as cv
 from scipy.spatial.transform import Rotation as R
 from lib.utils import plot_kinematics
 import matplotlib.pyplot as plt
+from kinematics.utils import gps_to_ned, make_DCM
 
 class CameraKinematics:
 
@@ -32,6 +34,8 @@ class CameraKinematics:
         self._last_rect = (0,0,0,0)
         self._interp_factor = factor
         self._diff_buff = []
+        self._pos_buff = []
+        self._pos_buff_size = 20
         self._last_target_states = [False]
 
         self._vis=vis
@@ -48,7 +52,7 @@ class CameraKinematics:
             return None
 
         ## calculate a DCM and find transpose that takes body to inertial
-        DCM_ib = self.make_DCM(eul).T
+        DCM_ib = make_DCM(eul).T
 
         ## return vector in inertial coordinates
         return np.matmul(DCM_ib, body_vec)
@@ -58,7 +62,7 @@ class CameraKinematics:
 
         ## calculate a "DCM" using euler angles of camera body, to convert vector
         ## from inertial to body coordinates
-        DCM_bi = self.make_DCM(eul)
+        DCM_bi = make_DCM(eul)
 
         ## return the vector in body coordinates
         return np.matmul(DCM_bi, in_vec)
@@ -75,7 +79,7 @@ class CameraKinematics:
         ## for MAVIC Mini camera, the body axis can be converted to camera
         ## axis by a 90 deg yaw and a 90 deg roll consecutively. then we transpose
         ## it to get camera to body
-        DCM_bc = self.make_DCM([90*np.pi/180, 0, 90*np.pi/180]).T
+        DCM_bc = make_DCM([90*np.pi/180, 0, 90*np.pi/180]).T
 
         return np.matmul(DCM_bc, vec)
 
@@ -83,7 +87,7 @@ class CameraKinematics:
 
         ## for MAVIC Mini camera, the body axis can be converted to camera
         ## axis by a 90 deg yaw and a 90 deg roll consecutively.
-        DCM_cb = self.make_DCM([90*np.pi/180, 0, 90*np.pi/180])
+        DCM_cb = make_DCM([90*np.pi/180, 0, 90*np.pi/180])
 
         return np.matmul(DCM_cb, vec)
 
@@ -110,6 +114,124 @@ class CameraKinematics:
         Y = cy + (dir[1] / dir[2]) * f
 
         return (int(X),int(Y))
+
+    def scale_vector(self, v, z):
+
+        if v is None:
+            return None
+
+        ## scale a unit vector v based on the fact that third component should be
+        ## equal to z
+        max_dist = 50
+        if v[2] > 0:
+            factor = np.abs(z) / np.abs(v[2])
+            if np.linalg.norm(factor*v) < max_dist:
+                return factor*v
+            else:
+                return max_dist*v
+        elif v[2] <= 0:
+            return max_dist*v
+
+    def updateRect3D(self, states, ref, image, rect=None):
+
+        if rect is not None:
+            self._last_rect = rect
+
+        ## convert target from a rect in "image coordinates" to a vector
+        ## in "camera body coordinates"
+        body_dir = self.cam_to_body(rect)
+
+        ## convert target from a vector in "camera body coordinates" to a vector
+        ## in "inertial coordinates"
+        imu_meas = states[4:7]
+        inertia_dir = self.body_to_inertia(body_dir, imu_meas)
+
+        ## convert gps lat, lon positions to a local cartesian coordinate
+        ref_loc = ref
+        ref_loc[2] = 0
+        cam_pos = gps_to_ned(ref_loc, states[1:4])
+
+
+        if rect is not None:
+
+            ## calculate target pos
+            target_pos = self.scale_vector(inertia_dir, cam_pos[2]) + cam_pos
+
+            ## buffer target positions
+            if len(self._pos_buff) > self._pos_buff_size:
+                del self._pos_buff[0]
+
+            ## clear buffer after redetection
+            if len(self._pos_buff) > 0:
+                if states[0] - self._pos_buff[-1][0] > 0.5:
+                    self._pos_buff = []
+
+            self._pos_buff.append([states[0], target_pos[0], target_pos[1], target_pos[2]])
+
+        vs = []
+        for i in range(1, len(self._pos_buff)):
+
+            t0 = self._pos_buff[i-1][0]
+            pos0 = self._pos_buff[i-1][1:4]
+
+            t = self._pos_buff[i][0]
+            pos = self._pos_buff[i][1:4]
+
+            dx = np.array(pos) - np.array(pos0)
+            dt = t-t0
+
+            if dt < 1 and dt!=0:
+                vs.append(dx/dt)
+
+        for data in self._pos_buff:
+
+            pos = data[1:4]
+            inertia_dir = pos - cam_pos
+            if np.linalg.norm(inertia_dir) == 0:
+                continue
+
+            inertia_dir = inertia_dir / np.linalg.norm(inertia_dir)
+
+            ## convert new estimate of target direction vector to body coordinates
+            body_dir_est = self.inertia_to_body( inertia_dir, imu_meas)
+
+            ## convert body to cam coordinates
+            cam_dir_est = self.body_to_cam(body_dir_est)
+
+            ## reproject to image plane
+            center_est = self.from_direction_vector(cam_dir_est, self._cx, self._cy, self._f)
+
+            p1 = (int(center_est[0]-1), int(center_est[1]-1))
+            p2 = (int(center_est[0]+1), int(center_est[1]+1))
+            image = cv.rectangle(image, p1, p2, (0, 255, 255),2)
+
+        if len(vs)>0:
+            v = np.mean(vs,0)
+            dt = states[0] - self._pos_buff[-2][0]
+            pos_est = self._pos_buff[-1][1:4] + self._interp_factor*v*dt
+
+            inertia_dir = pos_est - cam_pos
+            if np.linalg.norm(inertia_dir) != 0:
+
+                inertia_dir = inertia_dir / np.linalg.norm(inertia_dir)
+
+                ## convert new estimate of target direction vector to body coordinates
+                body_dir_est = self.inertia_to_body( inertia_dir, imu_meas)
+
+                ## convert body to cam coordinates
+                cam_dir_est = self.body_to_cam(body_dir_est)
+
+                ## reproject to image plane
+                center_est = self.from_direction_vector(cam_dir_est, self._cx, self._cy, self._f)
+
+
+        ## estimated rectangle
+        rect_est = (int(center_est[0]-self._last_rect[2]/2), \
+                    int(center_est[1]-self._last_rect[3]/2),
+                    self._last_rect[2], self._last_rect[3])
+
+        return rect_est
+
 
     def updateRectSphere(self, imu_meas, rect=None):
 
@@ -305,24 +427,6 @@ class CameraKinematics:
         return (top_left_inertia_dir,top_right_inertia_dir,\
                 bottom_left_inertia_dir,bottom_right_inertia_dir)
 
-    def make_DCM(self, eul):
-
-        phi = eul[0]
-        theta = eul[1]
-        psi = eul[2]
-
-        DCM = np.zeros((3,3))
-        DCM[0,0] = np.cos(psi)*np.cos(theta)
-        DCM[0,1] = np.sin(psi)*np.cos(theta)
-        DCM[0,2] = -np.sin(theta)
-        DCM[1,0] = np.cos(psi)*np.sin(theta)*np.sin(phi)-np.sin(psi)*np.cos(phi)
-        DCM[1,1] = np.sin(psi)*np.sin(theta)*np.sin(phi)+np.cos(psi)*np.cos(phi)
-        DCM[1,2] = np.cos(theta)*np.sin(phi)
-        DCM[2,0] = np.cos(psi)*np.sin(theta)*np.cos(phi)+np.sin(psi)*np.sin(phi)
-        DCM[2,1] = np.sin(psi)*np.sin(theta)*np.cos(phi)-np.cos(psi)*np.sin(phi)
-        DCM[2,2] = np.cos(theta)*np.cos(phi)
-
-        return DCM
 
     def toSpherecalCoords(self, vec):
 

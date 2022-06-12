@@ -224,7 +224,7 @@ class PyTracker:
         else:
             raise NotImplementedError
 
-        self.viot = self.interp_factor!=0
+        self.viot = True
         # self.viot = False
 
 
@@ -322,17 +322,13 @@ class PyTracker:
 
                 if psr0 is -1: psr0=psr
 
+
                 ## estimating target location using kinematc model
                 if psr/psr0 > self.ratio_thresh:
-                    if self.interp_factor<0:
-                        est_loc = kin.updateRectSphere(self.states[idx,:], bbox)
-                    else:
-                        est_loc = kin.updateRect(self.states[idx,:], bbox)
+                    est_loc = kin.updateRect3D(self.states[idx,:], self.states[0,1:4], current_frame, bbox)
                 else:
-                    if self.interp_factor<0:
-                        est_loc = kin.updateRectSphere(self.states[idx,:], None)
-                    else:
-                        est_loc = kin.updateRect(self.states[idx,:], None)
+                    est_loc = kin.updateRect3D(self.states[idx,:], self.states[0,1:4], current_frame, None)
+
 
                 # print("psr ratio: ",psr/psr0, " learning: ", psr/psr0 > self.ratio_thresh, " est: ", est_loc)
 
@@ -380,13 +376,17 @@ class PyTracker:
                         show_frame = cv2.line(show_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (0, 0, 255), 2)
                         show_frame = cv2.line(show_frame, (int(x1+w), int(y1)), (int(x1), int(y1 + h)), (0, 0, 255), 2)
 
+                    if self.viot:
+                        p1 = (int(est_loc[0]+est_loc[2]/2-1), int(est_loc[1]+est_loc[3]/2-1))
+                        p2 = (int(est_loc[0]+est_loc[2]/2+1), int(est_loc[1]+est_loc[3]/2+1))
+                        show_frame = cv2.rectangle(show_frame, p1, p2, (255, 0, 0),2)
+
                     # cv2.putText(show_frame, 'APCE:' + str(apce)[:5], (0, 250), cv2.FONT_HERSHEY_COMPLEX, 2,
                     #             (0, 0, 255), 5)
                     # cv2.putText(show_frame, 'PSR:' + str(psr)[:5], (0, 300), cv2.FONT_HERSHEY_COMPLEX, 2,
                     #             (255, 0, 0), 5)
                     # cv2.putText(show_frame, 'Fmax:' + str(F_max)[:5], (0, 350), cv2.FONT_HERSHEY_COMPLEX, 2,
                     #             (255, 0, 0), 5)
-
 
                     cv2.imshow('demo', show_frame)
                     if writer is not None:

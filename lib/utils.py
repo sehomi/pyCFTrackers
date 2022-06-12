@@ -63,7 +63,7 @@ def get_img_list(img_dir):
 def get_states_data(states_dir):
     st_path = os.path.join(states_dir, 'camera_states.txt')
     st = np.loadtxt(st_path, delimiter=',').astype(np.float64)
-    return st[:,4:7]
+    return st[:,:]
 
 def get_ground_truthes(img_path):
     gt_path = os.path.join(img_path, 'groundtruth_rect.txt')
