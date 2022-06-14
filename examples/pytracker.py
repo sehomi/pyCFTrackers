@@ -24,6 +24,12 @@ from cftracker.config import staple_config,ldes_config,dsst_config,csrdcf_config
 
 from kinematics.camera_kinematics import CameraKinematics
 
+try:
+  import google.colab
+  IN_COLAB = True
+except:
+  IN_COLAB = False
+
 class PyTracker:
     def __init__(self,img_dir,tracker_type,dataset_config):
         self.img_dir=img_dir
@@ -388,7 +394,9 @@ class PyTracker:
                     # cv2.putText(show_frame, 'Fmax:' + str(F_max)[:5], (0, 350), cv2.FONT_HERSHEY_COMPLEX, 2,
                     #             (255, 0, 0), 5)
 
-                    cv2.imshow('demo', show_frame)
+                    if not IN_COLAB:
+                        cv2.imshow('demo', show_frame)
+                        
                     if writer is not None:
                         writer.write(show_frame)
                     cv2.waitKey(1)

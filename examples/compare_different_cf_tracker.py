@@ -72,25 +72,25 @@ if __name__ == '__main__':
         #     viot_results[data_name]['kcf_gray_preds'].append(list(kcf_gray_pred.astype(np.int)))
         # print('kcf gray done!')
 
-        # dimp50_preds=tracker_dimp50.tracking()
+        # dimp50_preds=tracker_dimp50.tracking(verbose=True,video_path="../results/dimp50_{:s}.mp4".format(data_name))
         # viot_results[data_name]['tracker_dimp50_preds'] = []
         # for dimp50_pred in dimp50_preds:
         #     viot_results[data_name]['tracker_dimp50_preds'].append(list(dimp50_pred.astype(np.int)))
         # print('dimp50 done!')
         #
-        # kys_preds=tracker_kys.tracking()
+        # kys_preds=tracker_kys.tracking(verbose=True,video_path="../results/kys_{:s}.mp4".format(data_name))
         # viot_results[data_name]['tracker_kys_preds'] = []
         # for kys_pred in kys_preds:
         #     viot_results[data_name]['tracker_kys_preds'].append(list(kys_pred.astype(np.int)))
         # print('kys done!')
 
-        # tomp_preds=tracker_tomp.tracking()
+        # tomp_preds=tracker_tomp.tracking(verbose=True,video_path="../results/tomp_{:s}.mp4".format(data_name))
         # viot_results[data_name]['tracker_tomp_preds'] = []
         # for tomp_pred in tomp_preds:
         #     viot_results[data_name]['tracker_tomp_preds'].append(list(tomp_pred.astype(np.int)))
         # print('tomp done!')
 
-        # prdimp50_preds=tracker_prdimp50.tracking()
+        # prdimp50_preds=tracker_prdimp50.tracking(verbose=True,video_path="../results/prdimp50_{:s}.mp4".format(data_name))
         # viot_results[data_name]['tracker_prdimp50_preds'] = []
         # for prdimp50_pred in prdimp50_preds:
         #     viot_results[data_name]['tracker_prdimp50_preds'].append(list(prdimp50_pred.astype(np.int)))
@@ -102,25 +102,25 @@ if __name__ == '__main__':
         #     viot_results[data_name]['eco'].append(list(eco_pred.astype(np.int)))
         # print('eco done!')
 
-        kcf_hog_preds=tracker_kcf_hog.tracking()
+        kcf_hog_preds=tracker_kcf_hog.tracking(verbose=True,video_path="../results/kcf_{:s}.mp4".format(data_name))
         viot_results[data_name]['kcf_hog_preds'] = []
         for kcf_hog_pred in kcf_hog_preds:
             viot_results[data_name]['kcf_hog_preds'].append(list(kcf_hog_pred.astype(np.int)))
         print('kcf hog done!')
 
-        ldes_preds=tracker_ldes.tracking()
+        ldes_preds=tracker_ldes.tracking(verbose=True,video_path="../results/ldes_{:s}.mp4".format(data_name))
         viot_results[data_name]['ldes_preds'] = []
         for ldes_pred in ldes_preds:
             viot_results[data_name]['ldes_preds'].append(list(ldes_pred.astype(np.int)))
         print('ldes done!')
 
-        csrdcf_preds=tracker_csrdcf.tracking()
+        csrdcf_preds=tracker_csrdcf.tracking(verbose=True,video_path="../results/csrdcf_{:s}.mp4".format(data_name))
         viot_results[data_name]['csrdcf_preds'] = []
         for csrdcf_pred in csrdcf_preds:
             viot_results[data_name]['csrdcf_preds'].append(list(csrdcf_pred.astype(np.int)))
         print('csrdcf done!')
 
-        strcf_preds=tracker_strcf.tracking()
+        strcf_preds=tracker_strcf.tracking(verbose=True,video_path="../results/strcf_{:s}.mp4".format(data_name))
         viot_results[data_name]['strcf_preds'] = []
         for strcf_pred in strcf_preds:
             viot_results[data_name]['strcf_preds'].append(list(strcf_pred.astype(np.int)))
