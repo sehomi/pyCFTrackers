@@ -1,3 +1,14 @@
+import sys
+try:
+  import google.colab
+  IN_COLAB = True
+except:
+  IN_COLAB = False
+
+if IN_COLAB:
+    if "/content/pyCFTrackers" not in sys.path:
+        sys.path.insert(0, "/content/pyCFTrackers")
+
 import os
 import numpy as np
 import matplotlib.pyplot as plt
