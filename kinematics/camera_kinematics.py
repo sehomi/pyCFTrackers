@@ -134,9 +134,12 @@ class CameraKinematics:
 
     def limit_vector_to_fov(self, vector):
 
+        ## angle between target direction vector and camera forward axis
+        angle = np.arccos( np.dot(vector, np.array([0,0,1])) / np.linalg.norm(vector) )
+
         ## rotation axis which is perpendicular to both target vector and camera 
         ## axis
-        axis = np.cross( vector, np.array([0,0,1]) )
+        axis = np.cross( vector  / np.linalg.norm(vector), np.array([0,0,1]) )
 
         for i in range(90):
 
@@ -155,7 +158,11 @@ class CameraKinematics:
 
                 break
                 
-        return rotated_vec
+        if np.abs(rotation_radians) > np.abs(angle):
+            return vector
+        else:
+            return rotated_vec
+        
 
     def updateRect3D(self, states, ref, image, rect=None):
 
@@ -271,7 +278,7 @@ class CameraKinematics:
                 ## convert body to cam coordinates
                 cam_dir_est = self.body_to_cam(body_dir_est)
 
-                cam_dir_est = self.limit(cam_dir_est)
+                cam_dir_est = self.limit_vector_to_fov(cam_dir_est)
 
                 ## reproject to image plane
                 center_est = self.from_direction_vector(cam_dir_est, self._cx, self._cy, self._f)
