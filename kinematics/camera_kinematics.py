@@ -35,7 +35,7 @@ class CameraKinematics:
         self._interp_factor = factor
         self._diff_buff = []
         self._pos_buff = []
-        self._pos_buff_size = 20
+        self._pos_buff_size = 40
         self._last_target_states = [False]
 
         self._vis=vis
@@ -157,16 +157,41 @@ class CameraKinematics:
             ## calculate target pos
             target_pos = self.scale_vector(inertia_dir, cam_pos[2]) + cam_pos
 
+            ## if target is just found, empty the observation buffer to prevent
+            ## oscilations around target
+            if all(~np.array(self._last_target_states)):
+                self._pos_buff = []
+
             ## buffer target positions
             if len(self._pos_buff) > self._pos_buff_size:
                 del self._pos_buff[0]
 
-            ## clear buffer after redetection
-            if len(self._pos_buff) > 0:
-                if states[0] - self._pos_buff[-1][0] > 0.5:
-                    self._pos_buff = []
-
             self._pos_buff.append([states[0], target_pos[0], target_pos[1], target_pos[2]])
+
+            ## clear buffer after redetection
+            # if len(self._pos_buff) > 0:
+            #     if states[0] - self._pos_buff[-1][0] > 1.0:
+            #         self._pos_buff = []
+
+        ## if target just disappeared, eliminate some of the last buffered observations,
+        ## because target's box is having misleading shakes before being lost
+        if rect is None and self._last_target_states[-1]:
+            for i in range( int(0.4*len(self._pos_buff)) ):
+                del self._pos_buff[-1]
+
+        ## record last target states
+        if rect is None:
+            if len(self._last_target_states) < 3:
+                self._last_target_states.append(False)
+            else:
+                del self._last_target_states[0]
+                self._last_target_states.append(False)
+        else:
+            if len(self._last_target_states) < 3:
+                self._last_target_states.append(True)
+            else:
+                del self._last_target_states[0]
+                self._last_target_states.append(True)
 
         vs = []
         for i in range(1, len(self._pos_buff)):
