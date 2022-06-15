@@ -28,7 +28,7 @@ class VIOTDatasetConfig:
         # "cup_2.1HZ":[1,465],
         # "cup_3.2HZ":[1,254],
         # "park_mavic_1":[1,1005],
-        "park_mavic_1":[1,630],
+        # "park_mavic_1":[1,630],
         "park_mavic_2":[1,945],
         # "park_mavic_3":[1,2022],
         "park_mavic_3":[710,1100],

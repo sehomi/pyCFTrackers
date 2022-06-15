@@ -87,11 +87,11 @@ if __name__ == '__main__':
             viot_results[data_name]['tracker_kys_preds'].append(list(kys_pred.astype(np.int)))
         print('kys done!')
 
-        tomp_preds=tracker_tomp.tracking(verbose=True,video_path="../results/tomp_{:s}.mp4".format(data_name))
-        viot_results[data_name]['tracker_tomp_preds'] = []
-        for tomp_pred in tomp_preds:
-            viot_results[data_name]['tracker_tomp_preds'].append(list(tomp_pred.astype(np.int)))
-        print('tomp done!')
+        # tomp_preds=tracker_tomp.tracking(verbose=True,video_path="../results/tomp_{:s}.mp4".format(data_name))
+        # viot_results[data_name]['tracker_tomp_preds'] = []
+        # for tomp_pred in tomp_preds:
+        #     viot_results[data_name]['tracker_tomp_preds'].append(list(tomp_pred.astype(np.int)))
+        # print('tomp done!')
 
         prdimp50_preds=tracker_prdimp50.tracking(verbose=True,video_path="../results/prdimp50_{:s}.mp4".format(data_name))
         viot_results[data_name]['tracker_prdimp50_preds'] = []

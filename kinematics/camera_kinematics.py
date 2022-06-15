@@ -132,6 +132,31 @@ class CameraKinematics:
         elif v[2] <= 0:
             return max_dist*v
 
+    def limit_vector_to_fov(self, vector):
+
+        ## rotation axis which is perpendicular to both target vector and camera 
+        ## axis
+        axis = np.cross( vector, np.array([0,0,1]) )
+
+        for i in range(90):
+
+            rotation_degrees = i
+            rotation_radians = np.radians(rotation_degrees)
+            rotation_axis = axis / np.linalg.norm(axis)
+            rotation_vector = rotation_radians * rotation_axis
+            rotation = R.from_rotvec(rotation_vector)
+            rotated_vec = rotation.apply( np.array([0,0,1]) )
+
+            ## reproject to image plane
+            reproj_vec = self.from_direction_vector(rotated_vec, self._cx, self._cy, self._f)
+
+            if reproj_vec[0] >= self._w or reproj_vec[0] <= 0 or \
+               reproj_vec[1] >= self._h or reproj_vec[1] <= 0:
+
+                break
+                
+        return rotated_vec
+
     def updateRect3D(self, states, ref, image, rect=None):
 
         if rect is not None:
@@ -245,6 +270,8 @@ class CameraKinematics:
 
                 ## convert body to cam coordinates
                 cam_dir_est = self.body_to_cam(body_dir_est)
+
+                cam_dir_est = self.limit(cam_dir_est)
 
                 ## reproject to image plane
                 center_est = self.from_direction_vector(cam_dir_est, self._cx, self._cy, self._f)
