@@ -35,6 +35,7 @@ class CameraKinematics:
         self._interp_factor = factor
         self._diff_buff = []
         self._pos_buff = []
+        self._pos_est = None
         self._pos_buff_size = 40
         self._last_target_states = [False]
 
@@ -140,7 +141,7 @@ class CameraKinematics:
         ## rotation axis which is perpendicular to both target vector and camera 
         ## axis
         axis = np.cross( np.array([0,0,1]), vector  / np.linalg.norm(vector) )
-        last_reproj_vec = None
+        last_rotated_vec = None
 
         for i in range(90):
 
@@ -159,12 +160,17 @@ class CameraKinematics:
 
                 break
 
-            last_reproj_vec = rotated_vec
-                
-        if np.abs(rotation_radians) > np.abs(angle):
-            return vector
+            last_rotated_vec = rotated_vec
+
+        reproj = self.from_direction_vector(vector, self._cx, self._cy, self._f)
+
+        if reproj[0] >= self._w or reproj[0] <= 0 or \
+           reproj[1] >= self._h or reproj[1] <= 0:
+            # print("out ", reproj_vec)
+            return last_rotated_vec
         else:
-            return last_reproj_vec
+            # print("in ", reproj)
+            return vector
         
 
     def updateRect3D(self, states, ref, image, rect=None):
@@ -268,30 +274,36 @@ class CameraKinematics:
         if len(vs)>0:
             v = np.mean(vs,0)
             dt = states[0] - self._pos_buff[-2][0]
-            pos_est = self._pos_buff[-1][1:4] + self._interp_factor*v*dt
+            self._pos_est = self._pos_buff[-1][1:4] + self._interp_factor*v*dt
 
-            inertia_dir = pos_est - cam_pos
-            if np.linalg.norm(inertia_dir) != 0:
+        if self._pos_est is None:
+            return self._last_rect
 
-                inertia_dir = inertia_dir / np.linalg.norm(inertia_dir)
+        inertia_dir = self._pos_est - cam_pos
+        if np.linalg.norm(inertia_dir) != 0:
 
-                ## convert new estimate of target direction vector to body coordinates
-                body_dir_est = self.inertia_to_body( inertia_dir, imu_meas)
+            inertia_dir = inertia_dir / np.linalg.norm(inertia_dir)
 
-                ## convert body to cam coordinates
-                cam_dir_est = self.body_to_cam(body_dir_est)
+            ## convert new estimate of target direction vector to body coordinates
+            body_dir_est = self.inertia_to_body( inertia_dir, imu_meas)
 
-                cam_dir_est = self.limit_vector_to_fov(cam_dir_est)
+            ## convert body to cam coordinates
+            cam_dir_est = self.body_to_cam(body_dir_est)
 
-                ## reproject to image plane
-                center_est = self.from_direction_vector(cam_dir_est, self._cx, self._cy, self._f)
+            cam_dir_est = self.limit_vector_to_fov(cam_dir_est)
 
+            ## reproject to image plane
+            center_est = self.from_direction_vector(cam_dir_est, self._cx, self._cy, self._f)
+
+        ## if target and it's track is lost search image center
+        if len(vs)==0:
+            center_est = [int(self._cx), int(self._cy)]
 
         ## estimated rectangle
         rect_est = (int(center_est[0]-self._last_rect[2]/2), \
                     int(center_est[1]-self._last_rect[3]/2),
                     self._last_rect[2], self._last_rect[3])
-        image = cv.putText(image, '{:d}, {:d}'.format(center_est[0], center_est[1]), (50, 50), cv.FONT_HERSHEY_SIMPLEX, 
+        image = cv.putText(image, '{:d}, {:d}, {:d}'.format(center_est[0], center_est[1], len(vs)), (50, 50), cv.FONT_HERSHEY_SIMPLEX, 
                            1, (0,255,255), 2, cv.LINE_AA)
 
         return rect_est
