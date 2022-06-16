@@ -75,11 +75,11 @@ if __name__ == '__main__':
         #     viot_results[data_name]['kcf_gray_preds'].append(list(kcf_gray_pred.astype(np.int)))
         # print('kcf gray done!')
 
-        dimp50_preds=tracker_dimp50.tracking(verbose=True,video_path="../results/dimp50_{:s}.mp4".format(data_name))
-        viot_results[data_name]['tracker_dimp50_preds'] = []
-        for dimp50_pred in dimp50_preds:
-            viot_results[data_name]['tracker_dimp50_preds'].append(list(dimp50_pred.astype(np.int)))
-        print('dimp50 done!')
+        # dimp50_preds=tracker_dimp50.tracking(verbose=True,video_path="../results/dimp50_{:s}.mp4".format(data_name))
+        # viot_results[data_name]['tracker_dimp50_preds'] = []
+        # for dimp50_pred in dimp50_preds:
+        #     viot_results[data_name]['tracker_dimp50_preds'].append(list(dimp50_pred.astype(np.int)))
+        # print('dimp50 done!')
         
         kys_preds=tracker_kys.tracking(verbose=True,video_path="../results/kys_{:s}.mp4".format(data_name))
         viot_results[data_name]['tracker_kys_preds'] = []
@@ -87,11 +87,11 @@ if __name__ == '__main__':
             viot_results[data_name]['tracker_kys_preds'].append(list(kys_pred.astype(np.int)))
         print('kys done!')
 
-        # tomp_preds=tracker_tomp.tracking(verbose=True,video_path="../results/tomp_{:s}.mp4".format(data_name))
-        # viot_results[data_name]['tracker_tomp_preds'] = []
-        # for tomp_pred in tomp_preds:
-        #     viot_results[data_name]['tracker_tomp_preds'].append(list(tomp_pred.astype(np.int)))
-        # print('tomp done!')
+        tomp_preds=tracker_tomp.tracking(verbose=True,video_path="../results/tomp_{:s}.mp4".format(data_name))
+        viot_results[data_name]['tracker_tomp_preds'] = []
+        for tomp_pred in tomp_preds:
+            viot_results[data_name]['tracker_tomp_preds'].append(list(tomp_pred.astype(np.int)))
+        print('tomp done!')
 
         prdimp50_preds=tracker_prdimp50.tracking(verbose=True,video_path="../results/prdimp50_{:s}.mp4".format(data_name))
         viot_results[data_name]['tracker_prdimp50_preds'] = []

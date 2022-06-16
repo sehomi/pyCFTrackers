@@ -139,11 +139,12 @@ class CameraKinematics:
 
         ## rotation axis which is perpendicular to both target vector and camera 
         ## axis
-        axis = np.cross( vector  / np.linalg.norm(vector), np.array([0,0,1]) )
+        axis = np.cross( np.array([0,0,1]), vector  / np.linalg.norm(vector) )
+        last_reproj_vec = None
 
         for i in range(90):
 
-            rotation_degrees = i
+            rotation_degrees = i * np.sign(angle)
             rotation_radians = np.radians(rotation_degrees)
             rotation_axis = axis / np.linalg.norm(axis)
             rotation_vector = rotation_radians * rotation_axis
@@ -157,11 +158,13 @@ class CameraKinematics:
                reproj_vec[1] >= self._h or reproj_vec[1] <= 0:
 
                 break
+
+            last_reproj_vec = rotated_vec
                 
         if np.abs(rotation_radians) > np.abs(angle):
             return vector
         else:
-            return rotated_vec
+            return last_reproj_vec
         
 
     def updateRect3D(self, states, ref, image, rect=None):
@@ -288,6 +291,8 @@ class CameraKinematics:
         rect_est = (int(center_est[0]-self._last_rect[2]/2), \
                     int(center_est[1]-self._last_rect[3]/2),
                     self._last_rect[2], self._last_rect[3])
+        image = cv.putText(image, '{:d}, {:d}'.format(center_est[0], center_est[1]), (50, 50), cv.FONT_HERSHEY_SIMPLEX, 
+                           1, (0,255,255), 2, cv.LINE_AA)
 
         return rect_est
 
