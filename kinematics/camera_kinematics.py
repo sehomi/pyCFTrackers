@@ -200,8 +200,10 @@ class CameraKinematics:
 
             ## if target is just found, empty the observation buffer to prevent
             ## oscilations around target
-            if all(~np.array(self._last_target_states)):
-                self._pos_buff = []
+            if len(self._last_target_states) >= 5:
+                if np.sum( np.array(self._last_target_states[2:5]) ) >= 2  and \
+                   np.sum( np.array(self._last_target_states[0:3]) ) <= 1:
+                    self._pos_buff = []
 
             ## buffer target positions
             if len(self._pos_buff) > self._pos_buff_size:
@@ -217,18 +219,18 @@ class CameraKinematics:
         ## if target just disappeared, eliminate some of the last buffered observations,
         ## because target's box is having misleading shakes before being lost
         if rect is None and self._last_target_states[-1]:
-            for i in range( int(0.4*len(self._pos_buff)) ):
+            for i in range( int(0.2*len(self._pos_buff)) ):
                 del self._pos_buff[-1]
 
         ## record last target states
         if rect is None:
-            if len(self._last_target_states) < 3:
+            if len(self._last_target_states) < 5:
                 self._last_target_states.append(False)
             else:
                 del self._last_target_states[0]
                 self._last_target_states.append(False)
         else:
-            if len(self._last_target_states) < 3:
+            if len(self._last_target_states) < 5:
                 self._last_target_states.append(True)
             else:
                 del self._last_target_states[0]
@@ -267,9 +269,9 @@ class CameraKinematics:
             ## reproject to image plane
             center_est = self.from_direction_vector(cam_dir_est, self._cx, self._cy, self._f)
 
-            p1 = (int(center_est[0]-1), int(center_est[1]-1))
-            p2 = (int(center_est[0]+1), int(center_est[1]+1))
-            image = cv.rectangle(image, p1, p2, (0, 255, 255),2)
+            # p1 = (int(center_est[0]-1), int(center_est[1]-1))
+            # p2 = (int(center_est[0]+1), int(center_est[1]+1))
+            # image = cv.rectangle(image, p1, p2, (0, 255, 255),2)
 
         if len(vs)>0:
             v = np.mean(vs,0)
@@ -296,15 +298,15 @@ class CameraKinematics:
             center_est = self.from_direction_vector(cam_dir_est, self._cx, self._cy, self._f)
 
         ## if target and it's track is lost search image center
-        if len(vs)==0:
-            center_est = [int(self._cx), int(self._cy)]
+        # if len(vs)==0:
+        #     center_est = [int(self._cx), int(self._cy)]
 
         ## estimated rectangle
         rect_est = (int(center_est[0]-self._last_rect[2]/2), \
                     int(center_est[1]-self._last_rect[3]/2),
                     self._last_rect[2], self._last_rect[3])
-        image = cv.putText(image, '{:d}, {:d}, {:d}'.format(center_est[0], center_est[1], len(vs)), (50, 50), cv.FONT_HERSHEY_SIMPLEX, 
-                           1, (0,255,255), 2, cv.LINE_AA)
+        # image = cv.putText(image, '{:d}, {:d}, {:d}'.format(center_est[0], center_est[1], len(vs)), (50, 50), cv.FONT_HERSHEY_SIMPLEX, 
+        #                    1, (0,255,255), 2, cv.LINE_AA)
 
         return rect_est
 
