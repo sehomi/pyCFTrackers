@@ -30,10 +30,10 @@ class VIOTDatasetConfig:
         # "park_mavic_1":[1,1005],
         # # "park_mavic_1":[1,630],
         # "park_mavic_2":[45,945],
-        # "park_mavic_3":[1,2022],
+        # # "park_mavic_3":[1,2022],
         # "park_mavic_3":[710,1100],
         # # "park_mavic_4":[1,1906],
-        # "park_mavic_4":[1,500],
+        "park_mavic_4":[1,500],
         # "park_mavic_5":[840,1697],
         # "park_mavic_6":[1,1137],
         # # # "park_mavic_7":[1,915],
@@ -42,7 +42,7 @@ class VIOTDatasetConfig:
         # # "soccerfield_mavic_3":[1,1104],
         # "soccerfield_mavic_3":[1,500],
         # "soccerfield_mavic_4":[1,1297]
-        "soccerfield_mavic_4":[500,1297]
+        # "soccerfield_mavic_4":[500,1297]
     }
 
     params={
