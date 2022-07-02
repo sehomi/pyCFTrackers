@@ -269,9 +269,9 @@ class CameraKinematics:
             ## reproject to image plane
             center_est = self.from_direction_vector(cam_dir_est, self._cx, self._cy, self._f)
 
-            p1 = (int(center_est[0]-1), int(center_est[1]-1))
-            p2 = (int(center_est[0]+1), int(center_est[1]+1))
-            image = cv.rectangle(image, p1, p2, (0, 255, 255),2)
+            # p1 = (int(center_est[0]-1), int(center_est[1]-1))
+            # p2 = (int(center_est[0]+1), int(center_est[1]+1))
+            # image = cv.rectangle(image, p1, p2, (0, 255, 255),2)
 
         if len(vs)>0:
             v = np.mean(vs,0)
