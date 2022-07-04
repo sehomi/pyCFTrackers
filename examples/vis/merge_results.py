@@ -30,7 +30,7 @@ for file_name in dir_list:
 
     splitted_file_name = file_name.split("_")
 
-    if not splitted_file_name[1] == "viot":
+    if "viot" in file_name:
         continue
 
     tracker = splitted_file_name[0]
@@ -38,6 +38,9 @@ for file_name in dir_list:
         tracker = splitted_file_name[0] + "_" + splitted_file_name[1]
 
     result_json_path = path + file_name
+    if os.path.isdir(result_json_path):
+        continue
+         
     f = open(result_json_path, 'r')
     results = json.load(f)
 
@@ -45,7 +48,7 @@ for file_name in dir_list:
 
         if not key in viot_results.keys():
             viot_results[key] = {}
-            
+
         gt_path = "../../dataset/VIOT/{}".format(key)
         gts = get_ground_truthes_viot(gt_path)
         start_frame,end_frame=dataset_config.frames[key][:2]

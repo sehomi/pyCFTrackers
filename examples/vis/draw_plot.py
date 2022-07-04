@@ -227,7 +227,8 @@ def draw_plot(results_json_path,datalist,dataset_name):
     plt.xlabel('Location error threshold')
     plt.ylabel('Precision')
     plt.legend()
-    plt.savefig(dataset_name + '_precision.jpg')
+    plt.grid()
+    plt.savefig(dataset_name + '_precision.pdf', format="pdf")
     plt.clf()
     # plt.show()
 
@@ -256,12 +257,13 @@ def draw_plot(results_json_path,datalist,dataset_name):
     plt.xlabel('Overlap Threshold')
     plt.ylabel('Success Rate')
     plt.legend()
-    plt.savefig(dataset_name + '_success.jpg')
+    plt.grid()
+    plt.savefig(dataset_name + '_success.pdf', format="pdf")
     plt.clf()
     print(dataset_name,':',num_videos)
 
 
 if __name__=='__main__':
-    result_json_path='../all_results_viot.json'
+    result_json_path='../all_results.json'
 
     draw_plot(result_json_path,VIOT,'VIOT')
