@@ -1,7 +1,20 @@
+import sys
+try:
+  import google.colab
+  IN_COLAB = True
+except:
+  IN_COLAB = False
+
+if IN_COLAB:
+    print("**** in colab ****")
+    if "/content/pyCFTrackers" not in sys.path:
+        print("**** path not set ****")
+        sys.path.insert(0, "/content/pyCFTrackers")
+        print(sys.path)
+
 import json
 import numpy as np
 import matplotlib.pyplot as plt
-from examples.vis.OTB100_info import OTB100,OTB50,IV,SV,OCC,DEF,COLOR,GRAY,OTB2013
 from examples.vis.VIOT_info import VIOT
 from lib.utils import get_thresh_precision_pair,get_thresh_success_pair,calAUC
 def get_preds_by_name(preds_dict,key):
@@ -69,7 +82,7 @@ def draw_plot(results_json_path,datalist,dataset_name):
     num_videos=0
     for data_name in results.keys():
         if data_name not in datalist:
-            # print(data_name)
+            print(data_name)
             continue
 
         num_videos+=1
@@ -249,6 +262,6 @@ def draw_plot(results_json_path,datalist,dataset_name):
 
 
 if __name__=='__main__':
-    result_json_path='../viot_results.json'
+    result_json_path='../all_results_viot.json'
 
     draw_plot(result_json_path,VIOT,'VIOT')
