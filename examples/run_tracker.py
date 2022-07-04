@@ -18,7 +18,6 @@ import matplotlib.pyplot as plt
 from examples.pytracker import PyTracker
 import json
 from lib.utils import get_ground_truthes,get_ground_truthes_viot,get_thresh_success_pair,get_thresh_precision_pair,calAUC
-from examples.otbdataset_config import OTBDatasetConfig
 from examples.viotdataset_config import VIOTDatasetConfig
 
 def write_results(data_name, tracker, results):
