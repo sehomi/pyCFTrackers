@@ -17,6 +17,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from examples.vis.VIOT_info import VIOT
 from lib.utils import get_thresh_precision_pair,get_thresh_success_pair,calAUC
+
+
 def get_preds_by_name(preds_dict,key):
     valid_keys=['gts','kcf_gray_preds','kcf_hog_preds','dcf_gray_preds',
                 'dcf_hog_preds','mosse','csk','eco_hc','kcf_cn','kcf_pyECO_cn',
