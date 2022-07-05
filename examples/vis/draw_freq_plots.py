@@ -56,11 +56,17 @@ def draw_plot(datalist,dataset_name):
     success_kys_all = []
     success_tomp_all = []
 
-    num_videos=0
+    results_list = []
     for data_name in results.keys():
         if data_name not in datalist:
             print("ignoring ", data_name)
             continue
+        else:
+            print("plotting ", data_name)
+            results_list.append(data_name)
+
+    num_videos=0
+    for data_name in results_list:
 
         num_videos+=1
         data_all = results[data_name]
@@ -74,19 +80,41 @@ def draw_plot(datalist,dataset_name):
         tomp_preds = get_preds_by_name(data_all, 'tracker_tomp_preds')
         kys_preds = get_preds_by_name(data_all, 'tracker_kys_preds')
 
-        success_kcf_hog_all.append( np.array(get_thresh_success_pair(gts, kcf_hog_preds)[1])[49] )
-        success_ldes_all.append( np.array(get_thresh_success_pair(gts, ldes_preds)[1])[49] )
-        success_strcf_all.append( np.array(get_thresh_success_pair(gts, strcf_preds)[1])[49] )
-        success_csrdcf_all.append( np.array(get_thresh_success_pair(gts, csrdcf_preds)[1])[49] )
-        success_dimp50_all.append( np.array(get_thresh_success_pair(gts, dimp50_preds)[1])[49] )
-        success_prdimp50_all.append( np.array(get_thresh_success_pair(gts, prdimp50_preds)[1])[49] )
-        success_kys_all.append( np.array(get_thresh_success_pair(gts, kys_preds)[1])[49] )
-        success_tomp_all.append( np.array(get_thresh_success_pair(gts, tomp_preds)[1])[49] )
+        success_kcf_hog_all.append( calAUC( np.array(get_thresh_success_pair(gts, kcf_hog_preds)[1]) ) )
+        success_ldes_all.append( calAUC( np.array(get_thresh_success_pair(gts, ldes_preds)[1]) ) )
+        success_strcf_all.append( calAUC( np.array(get_thresh_success_pair(gts, strcf_preds)[1]) ) )
+        success_csrdcf_all.append( calAUC( np.array(get_thresh_success_pair(gts, csrdcf_preds)[1]) ) )
+        success_dimp50_all.append(calAUC( np.array(get_thresh_success_pair(gts, dimp50_preds)[1]) ) )
+        success_prdimp50_all.append( calAUC( np.array(get_thresh_success_pair(gts, prdimp50_preds)[1]) ) )
+        success_kys_all.append( calAUC( np.array(get_thresh_success_pair(gts, kys_preds)[1]) ) )
+        success_tomp_all.append( calAUC( np.array(get_thresh_success_pair(gts, tomp_preds)[1]) ) )
 
-    plt.plot(FREQS, success_kcf_hog_all, '--', label='KCF_HOG ')
-    plt.plot(FREQS, success_ldes_all, '--', label='LDES ')
-    plt.plot(FREQS, success_strcf_all, '--', label='STRCF ')
-    plt.plot(FREQS, success_csrdcf_all, '--', label='CSRDCF ')
+    idxs = []
+    for j in  range(len(FREQS)):
+        freq = FREQS[j]
+        freq_str = str(freq)
+
+        for i in  range(len(results_list)):
+            key = results_list[i]
+            if freq_str in key:
+                idxs.append(i)
+    
+    print(idxs)
+    print(list(np.array(results_list)[idxs]))
+    success_kcf_hog_all = np.array( success_kcf_hog_all )[idxs]
+    success_ldes_all = np.array( success_ldes_all )[idxs] 
+    success_strcf_all = np.array( success_strcf_all )[idxs] 
+    success_csrdcf_all = np.array( success_csrdcf_all )[idxs] 
+    success_dimp50_all = np.array( success_dimp50_all )[idxs] 
+    success_prdimp50_all = np.array( success_prdimp50_all )[idxs] 
+    success_kys_all = np.array( success_kys_all )[idxs] 
+    success_tomp_all = np.array( success_tomp_all )[idxs] 
+
+
+    plt.plot(FREQS, success_kcf_hog_all, ':', color='blue', label='KCF_HOG ')
+    plt.plot(FREQS, success_ldes_all, ':', color='orange', label='LDES ')
+    plt.plot(FREQS, success_strcf_all, ':', color='green', label='STRCF ')
+    plt.plot(FREQS, success_csrdcf_all, ':', color='red', label='CSRDCF ')
     # plt.plot(FREQS, success_dimp50_all, '--', label='DiMP50 ')
     # plt.plot(FREQS, success_prdimp50_all, '--', label='PrDiMP50 ')
     # plt.plot(FREQS, success_kys_all, '--', label='KYS ')
@@ -115,11 +143,17 @@ def draw_plot(datalist,dataset_name):
     success_kys_all = []
     success_tomp_all = []
 
-    num_videos=0
+    results_list = []
     for data_name in results.keys():
         if data_name not in datalist:
             print("ignoring ", data_name)
             continue
+        else:
+            print("plotting ", data_name)
+            results_list.append(data_name)
+
+    num_videos=0
+    for data_name in results_list:
 
         num_videos+=1
         data_all = results[data_name]
@@ -133,19 +167,38 @@ def draw_plot(datalist,dataset_name):
         tomp_preds = get_preds_by_name(data_all, 'tracker_tomp_preds')
         kys_preds = get_preds_by_name(data_all, 'tracker_kys_preds')
 
-        success_kcf_hog_all.append( np.array(get_thresh_success_pair(gts, kcf_hog_preds)[1])[49] )
-        success_ldes_all.append( np.array(get_thresh_success_pair(gts, ldes_preds)[1])[49] )
-        success_strcf_all.append( np.array(get_thresh_success_pair(gts, strcf_preds)[1])[49] )
-        success_csrdcf_all.append( np.array(get_thresh_success_pair(gts, csrdcf_preds)[1])[49] )
-        success_dimp50_all.append( np.array(get_thresh_success_pair(gts, dimp50_preds)[1])[49] )
-        success_prdimp50_all.append( np.array(get_thresh_success_pair(gts, prdimp50_preds)[1])[49] )
-        success_kys_all.append( np.array(get_thresh_success_pair(gts, kys_preds)[1])[49] )
-        success_tomp_all.append( np.array(get_thresh_success_pair(gts, tomp_preds)[1])[49] )
+        success_kcf_hog_all.append( calAUC( np.array(get_thresh_success_pair(gts, kcf_hog_preds)[1]) ) )
+        success_ldes_all.append( calAUC( np.array(get_thresh_success_pair(gts, ldes_preds)[1]) ) )
+        success_strcf_all.append( calAUC( np.array(get_thresh_success_pair(gts, strcf_preds)[1]) ) )
+        success_csrdcf_all.append( calAUC( np.array(get_thresh_success_pair(gts, csrdcf_preds)[1]) ) )
+        success_dimp50_all.append( calAUC( np.array(get_thresh_success_pair(gts, dimp50_preds)[1]) ) )
+        success_prdimp50_all.append( calAUC( np.array(get_thresh_success_pair(gts, prdimp50_preds)[1]) ) )
+        success_kys_all.append( calAUC( np.array(get_thresh_success_pair(gts, kys_preds)[1]) ) )
+        success_tomp_all.append( calAUC( np.array(get_thresh_success_pair(gts, tomp_preds)[1]) ) )
 
-    plt.plot(FREQS, success_kcf_hog_all, label='KCF_HOG_VIOT ')
-    plt.plot(FREQS, success_ldes_all, label='LDES_VIOT ')
-    plt.plot(FREQS, success_strcf_all, label='STRCF_VIOT ')
-    plt.plot(FREQS, success_csrdcf_all, label='CSRDCF_VIOT ')
+    idxs = []
+    for j in  range(len(FREQS)):
+        freq = FREQS[j]
+        freq_str = str(freq)
+
+        for i in  range(len(results_list)):
+            key = results_list[i]
+            if freq_str in key:
+                idxs.append(i)
+
+    success_kcf_hog_all = np.array( success_kcf_hog_all )[idxs]
+    success_ldes_all = np.array( success_ldes_all )[idxs] 
+    success_strcf_all = np.array( success_strcf_all )[idxs] 
+    success_csrdcf_all = np.array( success_csrdcf_all )[idxs] 
+    success_dimp50_all = np.array( success_dimp50_all )[idxs] 
+    success_prdimp50_all = np.array( success_prdimp50_all )[idxs] 
+    success_kys_all = np.array( success_kys_all )[idxs] 
+    success_tomp_all = np.array( success_tomp_all )[idxs] 
+
+    plt.plot(FREQS, success_kcf_hog_all, color='blue', label='KCF_HOG_VIOT ')
+    plt.plot(FREQS, success_ldes_all, color='orange', label='LDES_VIOT ')
+    plt.plot(FREQS, success_strcf_all, color='green', label='STRCF_VIOT ')
+    plt.plot(FREQS, success_csrdcf_all, color='red', label='CSRDCF_VIOT ')
     # plt.plot(FREQS, success_dimp50_all, label='DiMP50_VIOT ')
     # plt.plot(FREQS, success_prdimp50_all, label='PrDiMP50_VIOT ')
     # plt.plot(FREQS, success_kys_all, label='KYS_VIOT ')
@@ -155,7 +208,7 @@ def draw_plot(datalist,dataset_name):
     plt.ylabel('Success Rate (%)')
     plt.legend()
     plt.grid()
-
+    plt.xticks(FREQS, FREQS)
     plt.savefig(dataset_name + '_freq.pdf', format="pdf")
 
 
