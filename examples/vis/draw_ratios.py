@@ -1,0 +1,30 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+occ = np.loadtxt('/content/pyCFTrackers/results/occ_park_mavic_1.txt')
+kcf_hog = np.loadtxt('/content/pyCFTrackers/results/kcf_park_mavic_1.txt')
+ldes = np.loadtxt('/content/pyCFTrackers/results/ldes_park_mavic_1.txt')
+csrdcf = np.loadtxt('/content/pyCFTrackers/results/csrdcf_park_mavic_1.txt')
+strcf = np.loadtxt('/content/pyCFTrackers/results/strcf_park_mavic_1.txt')
+dimp50 = np.loadtxt('/content/pyCFTrackers/results/dimp50_park_mavic_1.txt')
+kys = np.loadtxt('/content/pyCFTrackers/results/kys_park_mavic_1.txt')
+tomp = np.loadtxt('/content/pyCFTrackers/results/tomp_park_mavic_1.txt')
+prdimp50 = np.loadtxt('/content/pyCFTrackers/results/prdimp50_park_mavic_1.txt')
+
+plt.rcParams["figure.figsize"] = (20,3)
+
+plt.plot(1-occ, color='black', label='Target Visibility')
+plt.plot(kcf_hog, label='KCF_HOG')
+plt.plot(ldes, label='LDES')
+plt.plot(csrdcf, label='CSRDCF')
+plt.plot(strcf, label='STRCF')
+plt.plot(dimp50, label='DiMP50')
+plt.plot(prdimp50, label='PrDiMP50')
+plt.plot(kys, label='KYS')
+plt.plot(tomp, label='ToMP')
+# plt.title(dataset_name + '')
+# plt.xlabel('')
+plt.ylabel('psr/psr0')
+plt.legend()
+plt.grid()
+plt.savefig('VIOT_ratios.pdf', format="pdf")

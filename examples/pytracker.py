@@ -230,8 +230,8 @@ class PyTracker:
         else:
             raise NotImplementedError
 
-        # self.viot = True
-        self.viot = False
+        self.viot = True
+        # self.viot = False
 
 
     def getETHTracker(self, name, params):
@@ -280,6 +280,7 @@ class PyTracker:
 
     def tracking(self,verbose=True,video_path=None):
         poses = []
+        ratios = []
         init_frame = cv2.imread(self.frame_list[0])
         #print(init_frame.shape)
         init_gt = np.array(self.init_gt)
@@ -292,6 +293,7 @@ class PyTracker:
         writer=None
         if verbose is True and video_path is not None:
             writer = cv2.VideoWriter(video_path, cv2.VideoWriter_fourcc('M', 'J', 'P', 'G'), 30, (init_frame.shape[1], init_frame.shape[0]))
+            ratios_path = os.path.splitext(video_path)[0] + ".txt"
 
         ## kinematic model for MAVIC Mini with horizontal field of view (hfov)
         ## equal to 66 deg.
@@ -328,6 +330,7 @@ class PyTracker:
 
                 if psr0 is -1: psr0=psr
 
+                ratios.append(psr/psr0)
 
                 ## estimating target location using kinematc model
                 if psr/psr0 > self.ratio_thresh:
@@ -378,9 +381,9 @@ class PyTracker:
                     current_frame[ymin:ymax, xmin:xmax] = score_map
                     show_frame=cv2.rectangle(current_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (255, 0, 0),2)
 
-                    # if not psr/psr0>self.ratio_thresh:
-                    #     show_frame = cv2.line(show_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (0, 0, 255), 2)
-                    #     show_frame = cv2.line(show_frame, (int(x1+w), int(y1)), (int(x1), int(y1 + h)), (0, 0, 255), 2)
+                    if not psr/psr0>self.ratio_thresh:
+                        show_frame = cv2.line(show_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (0, 0, 255), 2)
+                        show_frame = cv2.line(show_frame, (int(x1+w), int(y1)), (int(x1), int(y1 + h)), (0, 0, 255), 2)
 
                     if self.viot:
                         p1 = (int(est_loc[0]+est_loc[2]/2-1), int(est_loc[1]+est_loc[3]/2-1))
@@ -402,4 +405,6 @@ class PyTracker:
                     cv2.waitKey(1)
 
             poses.append(np.array([int(x1), int(y1), int(w), int(h)]))
+
+        np.savetxt(ratios_path, np.array(ratios), delimiter=',')
         return np.array(poses)
