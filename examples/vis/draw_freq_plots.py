@@ -34,6 +34,12 @@ def get_preds_by_name(preds_dict,key):
     return np_preds
 
 def draw_plot(datalist,dataset_name):
+    plt.rcParams["figure.figsize"] = (20,6)
+    plt.rcParams.update({'font.size': 14})
+
+    fig = plt.figure(figsize=(8, 3))
+    ax = fig.add_subplot(projection='3d')
+
     f = open('../all_results.json', 'r')
     results = json.load(f)
 
@@ -111,15 +117,15 @@ def draw_plot(datalist,dataset_name):
     success_tomp_all = np.array( success_tomp_all )[idxs] 
 
 
-    plt.plot(FREQS, success_kcf_hog_all, ':', color='blue', label='KCF_HOG ')
-    plt.plot(FREQS, success_ldes_all, ':', color='orange', label='LDES ')
-    plt.plot(FREQS, success_strcf_all, ':', color='green', label='STRCF ')
-    plt.plot(FREQS, success_csrdcf_all, ':', color='red', label='CSRDCF ')
-    # plt.plot(FREQS, success_dimp50_all, '--', label='DiMP50 ')
-    # plt.plot(FREQS, success_prdimp50_all, '--', label='PrDiMP50 ')
-    # plt.plot(FREQS, success_kys_all, '--', label='KYS ')
-    # plt.plot(FREQS, success_tomp_all, '--', label='ToMP ')
-    # plt.title(dataset_name + '')
+    # plt.plot(FREQS, success_kcf_hog_all, ':', color='blue', label='KCF_HOG ')
+    # plt.plot(FREQS, success_ldes_all, ':', color='orange', label='LDES ')
+    # plt.plot(FREQS, success_strcf_all, ':', color='green', label='STRCF ')
+    # plt.plot(FREQS, success_csrdcf_all, ':', color='red', label='CSRDCF ')
+    # # plt.plot(FREQS, success_dimp50_all, '--', label='DiMP50 ')
+    # # plt.plot(FREQS, success_prdimp50_all, '--', label='PrDiMP50 ')
+    # # plt.plot(FREQS, success_kys_all, '--', label='KYS ')
+    # # plt.plot(FREQS, success_tomp_all, '--', label='ToMP ')
+    # # plt.title(dataset_name + '')
 
     f = open('../all_results_viot.json', 'r')
     results = json.load(f)
@@ -195,20 +201,36 @@ def draw_plot(datalist,dataset_name):
     success_kys_all = np.array( success_kys_all )[idxs] 
     success_tomp_all = np.array( success_tomp_all )[idxs] 
 
-    plt.plot(FREQS, success_kcf_hog_all, color='blue', label='KCF_HOG_VIOT ')
-    plt.plot(FREQS, success_ldes_all, color='orange', label='LDES_VIOT ')
-    plt.plot(FREQS, success_strcf_all, color='green', label='STRCF_VIOT ')
-    plt.plot(FREQS, success_csrdcf_all, color='red', label='CSRDCF_VIOT ')
-    # plt.plot(FREQS, success_dimp50_all, label='DiMP50_VIOT ')
-    # plt.plot(FREQS, success_prdimp50_all, label='PrDiMP50_VIOT ')
-    # plt.plot(FREQS, success_kys_all, label='KYS_VIOT ')
-    # plt.plot(FREQS, success_tomp_all, label='ToMP_VIOT ')
-    # plt.title(dataset_name + '')
-    plt.xlabel('Camera Motion Frequencies (Hz)')
-    plt.ylabel('Success Rate (%)')
-    plt.legend()
-    plt.grid()
-    plt.xticks(FREQS, FREQS)
+    X = np.ones(len(FREQ_DATAS))*0.5
+    Y = np.arange(len(FREQ_DATAS))*2
+    bottom = np.zeros(len(FREQ_DATAS))
+    ax.bar3d(X, Y, bottom, 0.25, 0.25, success_kcf_hog_all*100, shade=True, label='KCF_HOG_VIOT ')
+    ax.bar3d(X, Y+0.25, bottom, 0.25, 0.25, success_ldes_all*100, shade=True, label='LDES_VIOT ')
+    ax.bar3d(X, Y+0.5, bottom, 0.25, 0.25, success_strcf_all*100, shade=True, label='STRCF_VIOT ')
+    ax.bar3d(X, Y+0.75, bottom, 0.25, 0.25, success_csrdcf_all*100, shade=True, label='CSRDCF_VIOT ')
+    
+    # plt.bar(X, success_kcf_hog_all, color='blue', label='KCF_HOG_VIOT ', width=0.25)
+    # plt.bar(X+0.25, success_ldes_all, color='orange', label='LDES_VIOT ', width=0.25)
+    # plt.bar(X+0.5, success_strcf_all, color='green', label='STRCF_VIOT ', width=0.25)
+    # plt.bar(X+0.75, success_csrdcf_all, color='red', label='CSRDCF_VIOT ', width=0.25)
+
+    # plt.plot(FREQS, success_kcf_hog_all, color='blue', label='KCF_HOG_VIOT ')
+    # plt.plot(FREQS, success_ldes_all, color='orange', label='LDES_VIOT ')
+    # plt.plot(FREQS, success_strcf_all, color='green', label='STRCF_VIOT ')
+    # plt.plot(FREQS, success_csrdcf_all, color='red', label='CSRDCF_VIOT ')
+    # # plt.plot(FREQS, success_dimp50_all, label='DiMP50_VIOT ')
+    # # plt.plot(FREQS, success_prdimp50_all, label='PrDiMP50_VIOT ')
+    # # plt.plot(FREQS, success_kys_all, label='KYS_VIOT ')
+    # # plt.plot(FREQS, success_tomp_all, label='ToMP_VIOT ')
+    # # plt.title(dataset_name + '')
+    # ax.xlabel('Camera Motion Frequencies (Hz)')
+    # ax.ylabel('Success Rate (%)')
+
+    ax.set_xlim([-5,5])
+    ax.legend()
+    ax.grid()
+
+    ax.set_yticks(Y, FREQ_DATAS)
     plt.savefig(dataset_name + '_freq.pdf', format="pdf")
 
 
