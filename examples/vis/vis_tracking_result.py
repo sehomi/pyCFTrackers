@@ -84,8 +84,9 @@ def vis_results(dataset_dir,data_name):
     img_list=get_img_list(img_dir)
     start_frame,end_frame=dataset_config.frames[data_name][0:2]
     img_list=img_list[start_frame-1:end_frame]
+    imgs = []
 
-    color_gt=(0,97,255) # gt
+    color_gt=(0,0,0) # gt
     color_ldes=(240,32,160) # 
     color_strcf=(32,240,160) # 
     color_csrdcf=(100,0,100) #
@@ -112,11 +113,8 @@ def vis_results(dataset_dir,data_name):
         prdimp50_pred = prdimp50_preds[i]
         tomp_pred = tomp_preds[i]
         kys_pred = kys_preds[i]
-
-        show_frame=drawrect(current_frame,(gt[0],gt[1]),
-                                 (gt[0]+gt[2],gt[1]+gt[3]),
-                                 color_gt,thickness=2)
-        show_frame=drawrect(show_frame,(kcf_hog_pred[0],kcf_hog_pred[1]),
+        
+        show_frame=drawrect(current_frame,(kcf_hog_pred[0],kcf_hog_pred[1]),
                                  (kcf_hog_pred[0]+kcf_hog_pred[2],kcf_hog_pred[1]+kcf_hog_pred[3]),
                                  color_kcf,thickness=2)
         show_frame=drawrect(show_frame,(ldes_pred[0],ldes_pred[1]),
@@ -158,6 +156,8 @@ def vis_results(dataset_dir,data_name):
         # cv2.imshow('demo',show_frame)
         # cv2.waitKey(10)
 
+        imgs.append(show_frame)
+
     f = open('../all_results_viot.json', 'r')
     results = json.load(f)
     if not data_name in results.keys():
@@ -175,30 +175,14 @@ def vis_results(dataset_dir,data_name):
     tomp_preds = get_preds_by_name(data_all, 'tracker_tomp_preds')
     kys_preds = get_preds_by_name(data_all, 'tracker_kys_preds')
 
-    img_dir=os.path.join(dataset_dir,data_name)
-
-    img_list=get_img_list(img_dir)
-    start_frame,end_frame=dataset_config.frames[data_name][0:2]
-    img_list=img_list[start_frame-1:end_frame]
-
-    color_gt=(0,97,255) # gt
-    color_ldes=(240,32,160) # 
-    color_strcf=(32,240,160) # 
-    color_csrdcf=(100,0,100) #
-    color_kcf=(160,32,240) #
-    color_dimp50=(0,255,0) #
-    color_prdimp50=(0,0,255) #
-    color_kys=(255,0,0) #
-    color_tomp=(0,255,255) #
-
     writer=None
-    for i in range(len(img_list)):
+    for i in range(len(imgs)):
 
         # flag,current_frame=cap.read()
         # if flag is False:
         #     return
 
-        current_frame = cv2.imread(img_list[i])
+        current_frame = imgs[i]
         gt=gts[i]
         kcf_hog_pred = kcf_hog_preds[i]
         ldes_pred = ldes_preds[i]
@@ -209,9 +193,13 @@ def vis_results(dataset_dir,data_name):
         tomp_pred = tomp_preds[i]
         kys_pred = kys_preds[i]
 
-        show_frame=cv2.rectangle(current_frame,(gt[0],gt[1]),
-                                 (gt[0]+gt[2],gt[1]+gt[3]),
-                                 color_gt,thickness=2)
+        try:
+            show_frame=cv2.rectangle(current_frame,(gt[0],gt[1]),
+                                    (gt[0]+gt[2],gt[1]+gt[3]),
+                                    color_gt,thickness=2)
+        except:
+            pass
+
         show_frame=cv2.rectangle(show_frame,(kcf_hog_pred[0],kcf_hog_pred[1]),
                                  (kcf_hog_pred[0]+kcf_hog_pred[2],kcf_hog_pred[1]+kcf_hog_pred[3]),
                                  color_kcf,thickness=2)
@@ -264,7 +252,8 @@ def vis_results(dataset_dir,data_name):
 
 if __name__=='__main__':
 
-    vis_results('../../dataset/VIOT','park_mavic_1')
+    vis_results('../../dataset/VIOT','soccerfield_mavic_4')
+
 
 
 
