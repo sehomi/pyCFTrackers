@@ -6,7 +6,7 @@ import time
 from pytracking import dcf, TensorList
 from pytracking.features.preprocessing import numpy_to_torch
 from pytracking.utils.plotting import show_tensor, plot_graph
-from pytracking.features.preprocessing import sample_patch_multiscale, sample_patch_transformed
+from pytracking.features.preprocessing import sample_patch_multiscale, sample_patch_multiloc, sample_patch_transformed
 from pytracking.features import augmentation
 import ltr.data.bounding_box_utils as bbutils
 from ltr.models.target_classifier.initializer import FilterInitializerZero
@@ -103,9 +103,12 @@ class DiMP(BaseTracker):
         # ------- LOCALIZATION ------- #
 
         # Extract backbone features
-        backbone_feat, sample_coords, im_patches = self.extract_backbone_features(im, self.get_centered_sample_pos(FI=FI),
-                                                                      self.target_scale * self.params.scale_factors,
-                                                                      self.img_sample_sz)
+        backbone_feat, sample_coords, im_patches = self.extract_backbone_features_multiloc(im, self.get_centered_sample_pos(FI=FI),
+                                                                                           self.target_scale * self.params.scale_factors,
+                                                                                           self.img_sample_sz)
+
+        self._sample_coords = sample_coords.cpu().detach().numpy()
+
         # Extract classification features
         test_x = self.get_classification_features(backbone_feat)
 
@@ -114,6 +117,7 @@ class DiMP(BaseTracker):
 
         # Compute classification scores
         scores_raw = self.classify_target(test_x)
+        print("*** ", scores_raw.cpu().detach().numpy().shape, sample_coords.cpu().detach().numpy().shape, im_patches.cpu().detach().numpy().shape, " ***")
 
         # Localize the target
         translation_vec, scale_ind, s, flag = self.localize_target(scores_raw, sample_pos, sample_scales)
@@ -196,13 +200,22 @@ class DiMP(BaseTracker):
     def get_centered_sample_pos(self, FI=None):
         """Get the center position for the new sample. Make sure the target is correctly centered."""
 
+        pos = []
         if FI is None:
-            pos = self.pos
-        else:
-            pos = torch.Tensor([ FI[1]+FI[3]/2, FI[0]+FI[2]/2])
+            pos.append(self.pos)
+            pos[-1] += ((self.feature_sz + self.kernel_size) % 2) * self.target_scale * \
+                         self.img_support_sz / (2*self.feature_sz)
 
-        return pos + ((self.feature_sz + self.kernel_size) % 2) * self.target_scale * \
-               self.img_support_sz / (2*self.feature_sz)
+        else:
+            pos.append(self.pos)
+            pos[-1] += ((self.feature_sz + self.kernel_size) % 2) * self.target_scale * \
+                         self.img_support_sz / (2*self.feature_sz)
+                         
+            pos.append( torch.Tensor([ FI[1]+FI[3]/2, FI[0]+FI[2]/2]) )
+            pos[-1] += ((self.feature_sz + self.kernel_size) % 2) * self.target_scale * \
+                         self.img_support_sz / (2*self.feature_sz)
+
+        return pos
 
     def classify_target(self, sample_x: TensorList):
         """Classify target by applying the DiMP filter."""
@@ -321,6 +334,14 @@ class DiMP(BaseTracker):
 
     def extract_backbone_features(self, im: torch.Tensor, pos: torch.Tensor, scales, sz: torch.Tensor):
         im_patches, patch_coords = sample_patch_multiscale(im, pos, scales, sz,
+                                                           mode=self.params.get('border_mode', 'replicate'),
+                                                           max_scale_change=self.params.get('patch_max_scale_change', None))
+        with torch.no_grad():
+            backbone_feat = self.net.extract_backbone(im_patches)
+        return backbone_feat, patch_coords, im_patches
+
+    def extract_backbone_features_multiloc(self, im: torch.Tensor, poses, scales, sz: torch.Tensor):
+        im_patches, patch_coords = sample_patch_multiloc(im, poses, scales, sz,
                                                            mode=self.params.get('border_mode', 'replicate'),
                                                            max_scale_change=self.params.get('patch_max_scale_change', None))
         with torch.no_grad():

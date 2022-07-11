@@ -51,6 +51,36 @@ def sample_patch_multiscale(im, pos, scales, image_sz, mode: str='replicate', ma
 
     return  im_patches, patch_coords
 
+def sample_patch_multiloc(im, poses, scales, image_sz, mode: str='replicate', max_scale_change=None):
+    """Extract image patches at multiple scales.
+    args:
+        im: Image.
+        poses: Center positions for extraction.
+        scales: Image scales to extract image patches from.
+        image_sz: Size to resize the image samples to
+        mode: how to treat image borders: 'replicate' (default), 'inside' or 'inside_major'
+        max_scale_change: maximum allowed scale change when using 'inside' and 'inside_major' mode
+    """
+    if isinstance(scales, (int, float)):
+        scales = [scales]
+
+    # Get image patches
+    im_patches = None
+    patch_coords = None
+
+    for pos in poses:
+        patch_iter, coord_iter = zip(*(sample_patch(im, pos, s*image_sz, image_sz, mode=mode,
+                                                    max_scale_change=max_scale_change) for s in scales))
+        
+        if im_patches is None or patch_coords is None:
+            im_patches =  torch.cat(list(patch_iter)) 
+            patch_coords = torch.cat(list(coord_iter)) 
+        else:
+            im_patches = torch.cat((im_patches, torch.cat(list(patch_iter)) ), 0)
+            patch_coords = torch.cat((patch_coords, torch.cat(list(coord_iter)) ), 0)
+
+    return  im_patches, patch_coords
+
 
 def sample_patch(im: torch.Tensor, pos: torch.Tensor, sample_sz: torch.Tensor, output_sz: torch.Tensor = None,
                  mode: str = 'replicate', max_scale_change=None, is_mask=False):

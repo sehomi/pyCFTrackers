@@ -381,6 +381,11 @@ class PyTracker:
                     current_frame[ymin:ymax, xmin:xmax] = score_map
                     show_frame=cv2.rectangle(current_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (255, 0, 0),2)
 
+                    if self.tracker_type=='DIMP50':
+                        for zone in self.tracker._sample_coords:
+                            show_frame=cv2.rectangle(show_frame, (int(zone[1]), int(zone[0])), 
+                                                     (int(zone[3]), int(zone[2])), (0, 255, 255),1)
+
                     if not psr/psr0>self.ratio_thresh:
                         show_frame = cv2.line(show_frame, (int(x1), int(y1)), (int(x1 + w), int(y1 + h)), (0, 0, 255), 2)
                         show_frame = cv2.line(show_frame, (int(x1+w), int(y1)), (int(x1), int(y1 + h)), (0, 0, 255), 2)
